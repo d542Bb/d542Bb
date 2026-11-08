@@ -6,10 +6,10 @@ AI 真是太好用了你们知道吗
 <br>
 
 <h3>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/card14-dark.png"><img src="card14-light.png" width="599" alt=""></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/assets/player-dark.png"><img src="assets/player-light.png" width="599" alt=""></picture>
 <details>
-<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/keys12-dark.png"><img src="keys12-light.png" width="577" alt=""></picture></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/assets/controls-dark.png"><img src="assets/controls-light.png" width="577" alt=""></picture></summary>
 <br>
-<img src="easter-egg.png" width="200" alt="">
+<img src="assets/easter-egg.png" width="200" alt="">
 </details>
 </h3>

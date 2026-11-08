@@ -10,7 +10,7 @@ AI 真是太好用了你们知道吗
 <h3>
 <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/assets/player-dark.png"><img src="assets/player-light.png" width="599" alt=""></picture>
 <details>
-<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/assets/controls-dark.png"><img src="assets/controls-light.png" width="577" alt=""></picture></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/assets/controls-liked-dark.png"><img src="assets/controls-liked-light.png" width="577" alt=""></picture></summary>
 <br>
 <!--
   你居然翻到这里了。敬佩。

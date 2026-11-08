@@ -6,7 +6,7 @@ Inputs
 
 Outputs
   assets/player-{light,dark}.png     title, lyrics, progress, artwork
-  assets/controls-{light,dark}.png   transport row + artist caption
+  assets/controls-liked-{light,dark}.png   transport row + artist caption
 
 Usage: python tools/build_player.py   (requires Pillow)
 """
@@ -174,7 +174,7 @@ def build_controls(theme: str, sprite):
         fit_text(draw, ARTIST, font(11), 170 * SCALE),
         font=font(11), fill=p["muted"], anchor="ms",
     )
-    strip.save(ROOT / f"assets/controls-{theme}.png", optimize=True)
+    strip.save(ROOT / f"assets/controls-liked-{theme}.png", optimize=True)
 
 
 def main():
@@ -183,7 +183,7 @@ def main():
     for theme in ("light", "dark"):
         build_card(theme, sprite, cover)
         build_controls(theme, sprite)
-    print("wrote assets/player-*.png and assets/controls-*.png")
+    print("wrote assets/player-*.png and assets/controls-liked-*.png")
 
 
 if __name__ == "__main__":

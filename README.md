@@ -6,7 +6,7 @@ AI 真是太好用了你们知道吗
 <br>
 
 <details>
-<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/card-dark.png"><img src="card-light.png" width="440" alt=""></picture></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/card-dark.png"><img src="card-light.png" width="654" alt=""></picture></summary>
 
 <br>
 

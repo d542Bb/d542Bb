@@ -14,42 +14,42 @@
       "src": "stickers/chibi.png",
       "size": 54,
       "x": 53.2,
-      "y": 74.0,
+      "y": 91.2,
       "rotate": -8
     },
     {
       "src": "stickers/bilibili.png",
       "size": 46,
       "x": 133.2,
-      "y": 67.5,
+      "y": 85.6,
       "rotate": 10
     },
     {
       "src": "stickers/star-gold.png",
       "size": 50,
       "x": 50.5,
-      "y": 143.3,
+      "y": 150.6,
       "rotate": "random"
     },
     {
       "src": "stickers/maarm.png",
       "size": 88,
       "x": 76.3,
-      "y": 204.9,
+      "y": 203.2,
       "rotate": -4
     },
     {
       "src": "stickers/python.png",
       "size": 56,
       "x": 54.5,
-      "y": 290.2,
+      "y": 276.2,
       "rotate": -10
     },
     {
       "src": "stickers/whale.png",
       "size": 62,
       "x": 127.8,
-      "y": 316.8,
+      "y": 299.0,
       "rotate": 8
     }
   ]

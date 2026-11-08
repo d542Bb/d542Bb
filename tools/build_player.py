@@ -1,16 +1,19 @@
-"""Regenerate the profile player artwork in assets/.
+"""Regenerate the profile player artwork in assets/ from player.config.json.
 
 Inputs
-  tools/cover.jpg             album artwork
+  player.config.json          song info (title, artist, lyrics, times, cover)
+  tools/cover.jpg             album artwork (or the path set in config)
   tools/qq-player-icons.png   2x icon sheet (QQ Music player sprite)
+  tools/fonts/                bundled Liberation Sans (SIL OFL 1.1)
 
 Outputs
   assets/player-{light,dark}.png     title, lyrics, progress, artwork
-  assets/controls-liked-{light,dark}.png   transport row + artist caption
+  assets/control-bar-{light,dark}.png transport row + artist caption
 
 Usage: python tools/build_player.py   (requires Pillow)
 """
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -23,26 +26,38 @@ COVER_SIZE = 162
 COVER_LEFT, COVER_TOP = CARD_W - 5 - COVER_SIZE, 5
 TEXT_RIGHT = 385
 
-TITLE = "Flower In A Hurricane (feat. Tame Impala, SZA, King Gizzard & the Lizard Wizard)"
-LYRIC_CURRENT = "Like a flower in a hurricane"
-LYRIC_NEXT = "I will die before I walk away"
-LYRIC_FOLLOWING = "Yeah you know"
-ELAPSED, DURATION = "01:32", "03:44"
-PROGRESS = (60 + 32) / (3 * 60 + 44)
-ARTIST = "Justice \u00b7 Tame Impala \u00b7 SZA"
-
 STRIP_W, STRIP_H = 577, 14
 ICON_SCALE = 0.74
 ICON_CELLS = {
     "next": (0, 80, 30, 120),
-    "like": (0, 200, 38, 240),
+    "like": (0, 160, 38, 200),
+    "liked": (0, 200, 38, 240),
     "delete": (0, 240, 36, 280),
     "more": (0, 280, 32, 320),
     "dot": (0, 400, 20, 420),
 }
 CAPTION_CENTER_X = 496  # page-space centre of the cover, in strip coordinates
 
-FONT_REGULAR = "C:/Windows/Fonts/arial.ttf"
+FONT_REGULAR = str(ROOT / "tools/fonts/LiberationSans-Regular.ttf")
+
+
+def load_config():
+    cfg = json.loads((ROOT / "player.config.json").read_text(encoding="utf-8"))
+    lyrics = cfg.get("lyrics", [])
+    cfg["lyrics"] = (lyrics + ["", "", ""])[:3]
+    cfg["progress"] = parse_progress(cfg["elapsed"], cfg["duration"])
+    return cfg
+
+
+def parse_progress(elapsed, duration):
+    def seconds(t):
+        parts = [int(p) for p in t.split(":")]
+        s = 0
+        for p in parts:
+            s = s * 60 + p
+        return s
+    total = seconds(duration)
+    return seconds(elapsed) / total if total else 0.0
 
 
 def theme_palette(dark: bool) -> dict:
@@ -84,8 +99,8 @@ def tint(sprite_cell, color):
     return out
 
 
-def load_cover():
-    src = Image.open(ROOT / "tools/cover.jpg").convert("RGBA")
+def load_cover(cfg):
+    src = Image.open(ROOT / cfg["cover"]).convert("RGBA")
     src = src.resize((COVER_SIZE * SCALE, COVER_SIZE * SCALE), Image.LANCZOS)
     mask = Image.new("L", src.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle(
@@ -96,7 +111,7 @@ def load_cover():
     return cover
 
 
-def build_card(theme: str, sprite, cover):
+def build_card(theme: str, sprite, cover, cfg):
     p = theme_palette(theme == "dark")
     img = Image.new("RGBA", (CARD_W * SCALE, CARD_H * SCALE), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img, "RGBA")
@@ -105,26 +120,23 @@ def build_card(theme: str, sprite, cover):
 
     draw.text(
         (0, 34 * SCALE),
-        fit_text(draw, TITLE, font(18), TEXT_RIGHT * SCALE),
+        fit_text(draw, cfg["title"], font(18), TEXT_RIGHT * SCALE),
         font=font(18), fill=p["text"], anchor="ls",
     )
-    for baseline, text, color in (
-        (62, LYRIC_CURRENT, p["text"]),
-        (80, LYRIC_NEXT, p["lyric_next"]),
-        (98, LYRIC_FOLLOWING, p["lyric_following"]),
-    ):
+    lyric_colors = (p["text"], p["lyric_next"], p["lyric_following"])
+    for baseline, text, color in zip((62, 80, 98), cfg["lyrics"], lyric_colors):
         draw.text(
             (0, baseline * SCALE),
             fit_text(draw, text, font(13), TEXT_RIGHT * SCALE),
             font=font(13), fill=color, anchor="ls",
         )
 
-    draw.text((0, 155 * SCALE), ELAPSED, font=font(12), fill=p["muted"], anchor="ls")
-    draw.text((TEXT_RIGHT * SCALE, 155 * SCALE), DURATION, font=font(12), fill=p["muted"], anchor="rs")
+    draw.text((0, 155 * SCALE), cfg["elapsed"], font=font(12), fill=p["muted"], anchor="ls")
+    draw.text((TEXT_RIGHT * SCALE, 155 * SCALE), cfg["duration"], font=font(12), fill=p["muted"], anchor="rs")
 
     bar_left, bar_right, bar_top = 41 * SCALE, 343 * SCALE, 150 * SCALE
     draw.rounded_rectangle([bar_left, bar_top, bar_right, bar_top + 2 * SCALE], radius=SCALE, fill=p["track"])
-    knob_x = bar_left + (bar_right - bar_left) * PROGRESS
+    knob_x = bar_left + (bar_right - bar_left) * cfg["progress"]
     draw.rounded_rectangle([bar_left, bar_top, knob_x, bar_top + 2 * SCALE], radius=SCALE, fill=p["accent"])
     dot = sprite.crop(ICON_CELLS["dot"])
     if theme == "dark":
@@ -134,13 +146,14 @@ def build_card(theme: str, sprite, cover):
     img.save(ROOT / f"assets/player-{theme}.png", optimize=True)
 
 
-def build_controls(theme: str, sprite):
+def build_controls(theme: str, sprite, cfg):
     p = theme_palette(theme == "dark")
     strip = Image.new("RGBA", (STRIP_W * SCALE, STRIP_H * SCALE), (0, 0, 0, 0))
+    like_cell = "liked" if cfg.get("liked") else "like"
 
     def icon(name):
         cell = sprite.crop(ICON_CELLS[name])
-        if theme == "dark" and name != "like":
+        if theme == "dark" and name != "liked":
             cell = tint(cell, p["text"])
         return cell.resize(
             (int(cell.width * ICON_SCALE), int(cell.height * ICON_SCALE)), Image.LANCZOS
@@ -154,7 +167,7 @@ def build_controls(theme: str, sprite):
         strip.paste(cell, (int(x * SCALE), int(y)), cell)
 
     place("next", 0, drop=3)
-    place("like", 297, drop=-1, anchor_right=True)
+    place(like_cell, 297, drop=-1, anchor_right=True)
     place("delete", 333, drop=-1, anchor_right=True)
     place("more", 367, drop=-1, anchor_right=True)
 
@@ -171,19 +184,20 @@ def build_controls(theme: str, sprite):
 
     draw.text(
         (CAPTION_CENTER_X * SCALE, 12 * SCALE),
-        fit_text(draw, ARTIST, font(11), 170 * SCALE),
+        fit_text(draw, cfg["artist"], font(11), 170 * SCALE),
         font=font(11), fill=p["muted"], anchor="ms",
     )
-    strip.save(ROOT / f"assets/controls-liked-{theme}.png", optimize=True)
+    strip.save(ROOT / f"assets/control-bar-{theme}.png", optimize=True)
 
 
 def main():
+    cfg = load_config()
     sprite = Image.open(ROOT / "tools/qq-player-icons.png").convert("RGBA")
-    cover = load_cover()
+    cover = load_cover(cfg)
     for theme in ("light", "dark"):
-        build_card(theme, sprite, cover)
-        build_controls(theme, sprite)
-    print("wrote assets/player-*.png and assets/controls-liked-*.png")
+        build_card(theme, sprite, cover, cfg)
+        build_controls(theme, sprite, cfg)
+    print("wrote assets/player-*.png and assets/control-bar-*.png")
 
 
 if __name__ == "__main__":

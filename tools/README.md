@@ -4,6 +4,10 @@ A GitHub profile README that renders a QQ-Music-style "now playing" card with a
 collapsible easter egg. The card and control strip are static PNGs generated from
 a small config, so they work inside GitHub's sanitized Markdown (no CSS or JS).
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="../assets/player-dark.png"><img src="../assets/player-light.png" width="599" alt="player card"></picture>
+<br>
+<picture><source media="(prefers-color-scheme: dark)" srcset="../assets/control-bar-dark.png"><img src="../assets/control-bar-light.png" width="577" alt="control bar"></picture>
+
 ## Use it on your own profile
 
 1. Click **Use this template** and name the new repo `<your-username>/<your-username>`

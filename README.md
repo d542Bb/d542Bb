@@ -7,10 +7,10 @@ AI 真是太好用了你们知道吗
 
 <div align="center">
 
-<img src="progress.png" width="480" alt="">
+<img src="progress.png" width="320" alt="">
 
 <details>
-<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/controls-dark.png"><img src="controls-light.png" width="144" alt=""></picture></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/controls-dark.png"><img src="controls-light.png" width="96" alt=""></picture></summary>
 
 <br>
 

@@ -35,7 +35,7 @@ STRIP_W, STRIP_H = 577, 14
 ICON_SCALE = 0.74
 ICON_CELLS = {
     "next": (0, 80, 30, 120),
-    "like": (0, 160, 38, 200),
+    "like": (0, 200, 38, 240),
     "delete": (0, 240, 36, 280),
     "more": (0, 280, 32, 320),
     "dot": (0, 400, 20, 420),
@@ -140,7 +140,7 @@ def build_controls(theme: str, sprite):
 
     def icon(name):
         cell = sprite.crop(ICON_CELLS[name])
-        if theme == "dark":
+        if theme == "dark" and name != "like":
             cell = tint(cell, p["text"])
         return cell.resize(
             (int(cell.width * ICON_SCALE), int(cell.height * ICON_SCALE)), Image.LANCZOS

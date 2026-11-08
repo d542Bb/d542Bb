@@ -5,9 +5,9 @@ AI 真是太好用了你们知道吗
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player-dark.png"><img src="player-light.png" width="654" alt=""></picture>
-
 <h3>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player-dark.png"><img src="player-light.png" width="654" alt=""></picture>
 
 <details>
 <summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/keys-dark.png"><img src="keys-light.png" width="364" alt=""></picture></summary>

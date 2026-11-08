@@ -6,7 +6,7 @@ AI 真是太好用了你们知道吗
 <br>
 
 <h3>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player3-dark.png"><img src="player3-light.png" width="654" alt=""></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player4-dark.png"><img src="player4-light.png" width="654" alt=""></picture>
 <details>
 <summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/keys3-dark.png"><img src="keys3-light.png" width="368" alt=""></picture></summary>
 <br>

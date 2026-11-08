@@ -6,9 +6,9 @@ AI 真是太好用了你们知道吗
 <br>
 
 <h3>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player-dark.png"><img src="player-light.png" width="654" alt=""></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/player3-dark.png"><img src="player3-light.png" width="654" alt=""></picture>
 <details>
-<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/keys2-dark.png"><img src="keys2-light.png" width="364" alt=""></picture></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/keys3-dark.png"><img src="keys3-light.png" width="368" alt=""></picture></summary>
 <br>
 <img src="easter-egg.png" width="200" alt="">
 </details>

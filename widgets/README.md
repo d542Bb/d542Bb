@@ -9,7 +9,7 @@ Rendered by this very repo (see it live on [the profile](https://github.com/d542
 
 | | |
 | --- | --- |
-| ![*sticker board*](../assets/stickers.png) | ![*music player*](../assets/player-light.png) |
+| ![*music player*](../assets/player-light.png) | ![*sticker board*](../assets/stickers.png) |
 
 ## Quick start
 
@@ -46,18 +46,22 @@ Rendered by this very repo (see it live on [the profile](https://github.com/d542
 
 ## Placing widgets in the README
 
-Float an image beside your text and let it scale with the viewport:
+The packed look comes from a two-column table: text and player stacked in the
+left column, the sticker board spanning both rows on the right. Markdown does
+not parse inside HTML table cells, so the text is written as HTML — it is only
+a handful of tags (see the top of the root [`README.md`](../README.md) for a
+working copy).
 
-```html
-<img src="assets/stickers.png" align="right" width="40%" alt="">
-```
+Sizing notes learned the hard way:
 
-- `width` in percent keeps the layout working on phones: 40% ≈ 330px on
-  desktop, proportionally smaller on mobile where the column is narrow.
-- A fixed pixel width (`width="330"`) looks the same on desktop but squeezes
-  your text into a sliver on phones.
-- The sticker board's canvas auto-expands to fit its content, so check the
-  workflow log (or run it locally) for the actual pixel size when picking a %.
+- GitHub's stylesheet adds ~13px of cell padding on each side and ~20px of
+  image padding, so an `width="599"` player fits a 624px column exactly.
+  With the player at its native 599px, the right cell leaves ~193px for the
+  sticker board on the standard 846px profile column.
+- Give the board cell `valign="top"` so the stickers start beside the text.
+- A plain `align="right"` float also works and reflows better on phones, but
+  short intro lines leave a hole between the text and the board — the table
+  keeps everything packed on desktop (it scrolls horizontally on phones).
 - Individual stickers inside the composed board can't carry links — if you
   need a clickable element, place a separate `<a href="..."><img ...></a>`.
 

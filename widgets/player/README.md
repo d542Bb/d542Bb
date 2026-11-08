@@ -11,16 +11,17 @@ big picture.
 <br>
 <picture><source media="(prefers-color-scheme: dark)" srcset="../assets/control-bar-dark.png"><img src="../assets/control-bar-light.png" width="577" alt="control bar"></picture>
 
-## Use it on your own profile
+## Use it
 
-1. Click **Use this template** and name the new repo `<your-username>/<your-username>`
-   (a repo matching your username renders its README on your profile).
-2. Edit [`config.json`](config.json) with your song.
-3. Replace [`cover.jpg`](cover.jpg) with your album art (square image).
-4. Edit the top of [`README.md`](../../README.md) — intro lines and the hidden
-   source-only comment in the `<details>` block.
-5. Push. The **Build profile artwork** action regenerates the PNGs in `assets/`
-   and commits them automatically.
+Follow the [quick start](../README.md#quick-start) in the template guide, then:
+
+1. Edit [`config.json`](config.json) with your song.
+2. Replace [`cover.jpg`](cover.jpg) with your album art (square image).
+3. Edit the top of the root [`README.md`](../../README.md) — intro lines and
+   the hidden source-only comment in the `<details>` block.
+
+Push and the **Build profile artwork** workflow regenerates the PNGs in
+`assets/` and commits them automatically.
 
 ## Config fields
 

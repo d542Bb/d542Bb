@@ -16,9 +16,9 @@ Preview (sample stickers — replace them with your own):
 ## Use it on your profile
 
 Reference the generated image where you want the board, **before** the text it
-should sit beside. Check the build log for the actual pixel size of the PNG
-(it auto-fits the stickers) and set `width` accordingly — around the canvas
-size from the config keeps the design at its intended scale:
+should sit beside. The PNG is saved at 2× and auto-fits the stickers; the build
+log ends with `display at width=…` — use that number (roughly the canvas size)
+as the `width` attribute to keep the design at its intended scale:
 
 Right of the text (text wraps on its left):
 

@@ -488,8 +488,11 @@ def main():
     for sticker, _, left, top, _, _, _ in layers:
         paste_layer(canvas, sticker, left + ox, top + oy)
 
-    canvas.resize((width, height), Image.LANCZOS).save(ROOT / "assets/stickers.png", optimize=True)
-    print(f"wrote assets/stickers.png ({width}x{height})")
+    # Keep the supersampled canvas: the README shows the PNG at roughly half
+    # its pixel width, so saving at 1x would have the browser upscale a
+    # blurry file instead of downscaling a sharp one.
+    canvas.save(ROOT / "assets/stickers.png", optimize=True)
+    print(f"wrote assets/stickers.png ({width * SCALE}x{height * SCALE}, display at width={width})")
 
 
 if __name__ == "__main__":

@@ -5,11 +5,17 @@ AI 真是太好用了你们知道吗
 
 <br>
 
+<div align="center">
+
+<img src="progress.png" width="480" alt="">
+
 <details>
-<summary><img src="player.png" width="360" alt=""></summary>
+<summary><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/d542Bb/d542Bb/main/controls-dark.png"><img src="controls-light.png" width="144" alt=""></picture></summary>
 
 <br>
 
 <img src="easter-egg.png" width="200" alt="">
 
 </details>
+
+</div>

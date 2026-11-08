@@ -1,16 +1,16 @@
-"""Regenerate the profile player artwork in assets/ from player.config.json.
+"""Regenerate the profile player artwork in assets/ from config.json.
 
 Inputs
-  player.config.json          song info (title, artist, lyrics, times, cover)
-  tools/cover.jpg             album artwork (or the path set in config)
-  tools/qq-player-icons.png   2x icon sheet (QQ Music player sprite)
-  tools/fonts/                bundled Liberation Sans (SIL OFL 1.1)
+  config.json                 song info (title, artist, lyrics, times, cover)
+  cover.jpg                   album artwork (or the path set in config)
+  qq-player-icons.png         2x icon sheet (QQ Music player sprite)
+  fonts/                      bundled Liberation Sans (SIL OFL 1.1)
 
 Outputs
   assets/player-{light,dark}.png     title, lyrics, progress, artwork
   assets/control-bar-{light,dark}.png transport row + artist caption
 
-Usage: python tools/build_player.py   (requires Pillow)
+Usage: python widgets/player/build.py   (requires Pillow)
 """
 
 import json
@@ -18,7 +18,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]   # repo root (assets/ lives here)
+WIDGET = Path(__file__).resolve().parent     # this widget's folder
 SCALE = 2  # supersampling factor; output is 2x the CSS size
 
 CARD_W, CARD_H = 599, 172
@@ -38,11 +39,11 @@ ICON_CELLS = {
 }
 CAPTION_CENTER_X = 496  # page-space centre of the cover, in strip coordinates
 
-FONT_REGULAR = str(ROOT / "tools/fonts/LiberationSans-Regular.ttf")
+FONT_REGULAR = str(WIDGET / "fonts/LiberationSans-Regular.ttf")
 
 
 def load_config():
-    cfg = json.loads((ROOT / "player.config.json").read_text(encoding="utf-8"))
+    cfg = json.loads((WIDGET / "config.json").read_text(encoding="utf-8"))
     lyrics = cfg.get("lyrics", [])
     cfg["lyrics"] = (lyrics + ["", "", ""])[:3]
     cfg["progress"] = parse_progress(cfg["elapsed"], cfg["duration"])
@@ -100,7 +101,7 @@ def tint(sprite_cell, color):
 
 
 def load_cover(cfg):
-    src = Image.open(ROOT / cfg["cover"]).convert("RGBA")
+    src = Image.open(WIDGET / cfg["cover"]).convert("RGBA")
     src = src.resize((COVER_SIZE * SCALE, COVER_SIZE * SCALE), Image.LANCZOS)
     mask = Image.new("L", src.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle(
@@ -192,7 +193,7 @@ def build_controls(theme: str, sprite, cfg):
 
 def main():
     cfg = load_config()
-    sprite = Image.open(ROOT / "tools/qq-player-icons.png").convert("RGBA")
+    sprite = Image.open(WIDGET / "qq-player-icons.png").convert("RGBA")
     cover = load_cover(cfg)
     for theme in ("light", "dark"):
         build_card(theme, sprite, cover, cfg)

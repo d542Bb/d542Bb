@@ -1,0 +1,17 @@
+{
+  "canvas": { "width": 300, "height": 240 },
+  "defaults": {
+    "size": 78,
+    "alpha_threshold": 250,
+    "harmonize": true,
+    "material": true
+  },
+  "stickers": [
+    { "src": "stickers/maarm.png",     "size": 118, "x": 150, "y": 126, "rotate": -4 },
+    { "src": "stickers/chibi.png",     "size": 76,  "x": 46,  "y": 44,  "rotate": -8 },
+    { "src": "stickers/bilibili.png",  "size": 58,  "x": 252, "y": 42,  "rotate": 10 },
+    { "src": "stickers/star-gold.png", "size": 64,  "x": 148, "y": 26,  "rotate": "random" },
+    { "src": "stickers/whale.png",     "size": 86,  "x": 252, "y": 180, "rotate": 8 },
+    { "src": "stickers/python.png",    "size": 76,  "x": 44,  "y": 182, "rotate": -10 }
+  ]
+}

@@ -1,8 +1,11 @@
 # Profile music player
 
-A GitHub profile README that renders a QQ-Music-style "now playing" card with a
-collapsible easter egg. The card and control strip are static PNGs generated from
-a small config, so they work inside GitHub's sanitized Markdown (no CSS or JS).
+A QQ-Music-style "now playing" card with a collapsible easter egg. The card and
+control strip are static PNGs generated from a small config, so they work inside
+GitHub's sanitized Markdown (no CSS or JS).
+
+One of the widgets in this template — see [../README.md](../README.md) for the
+big picture.
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="../assets/player-dark.png"><img src="../assets/player-light.png" width="599" alt="player card"></picture>
 <br>
@@ -12,11 +15,11 @@ a small config, so they work inside GitHub's sanitized Markdown (no CSS or JS).
 
 1. Click **Use this template** and name the new repo `<your-username>/<your-username>`
    (a repo matching your username renders its README on your profile).
-2. Edit [`player.config.json`](../player.config.json) with your song.
+2. Edit [`config.json`](config.json) with your song.
 3. Replace [`cover.jpg`](cover.jpg) with your album art (square image).
-4. Edit the top of [`README.md`](../README.md) — intro lines and the hidden
+4. Edit the top of [`README.md`](../../README.md) — intro lines and the hidden
    source-only comment in the `<details>` block.
-5. Push. The **Build player artwork** action regenerates the PNGs in `assets/`
+5. Push. The **Build profile artwork** action regenerates the PNGs in `assets/`
    and commits them automatically.
 
 ## Config fields
@@ -28,13 +31,13 @@ a small config, so they work inside GitHub's sanitized Markdown (no CSS or JS).
 | `lyrics` | Up to three lines: current, then two fading lines. |
 | `elapsed` / `duration` | `m:ss` times; the progress bar fills to `elapsed / duration`. |
 | `liked` | `true` shows a filled red heart, `false` an outline. |
-| `cover` | Path to the album art, relative to the repo root. |
+| `cover` | Path to the album art, relative to this folder. |
 
 ## Build locally
 
 ```bash
 pip install Pillow
-python tools/build_player.py
+python widgets/player/build.py
 ```
 
 Outputs `assets/player-{light,dark}.png` and `assets/control-bar-{light,dark}.png`.
@@ -42,7 +45,7 @@ The build is deterministic: the same config and inputs produce identical files.
 
 ## How it works
 
-- `build_player.py` renders at 2x and downsamples for crisp text. Layout, colours
+- `build.py` renders at 2x and downsamples for crisp text. Layout, colours
   and the icon sprite live in the script; only the song info comes from the config.
 - Light and dark variants are selected with `<picture>` + `prefers-color-scheme`.
   Both `src` and `srcset` use repo-relative paths, so the template is portable.

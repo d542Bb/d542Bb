@@ -1,19 +1,18 @@
-name: Build player artwork
+name: Build profile artwork
 
 on:
   push:
     branches: [main]
     paths:
-      - player.config.json
-      - tools/**
-      - .github/workflows/build-player.yml
+      - widgets/**
+      - .github/workflows/build-widgets.yml
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: build-player
+  group: build-widgets
   cancel-in-progress: true
 
 jobs:
@@ -30,16 +29,16 @@ jobs:
         run: pip install Pillow
 
       - name: Regenerate artwork
-        run: python tools/build_player.py
+        run: python widgets/build_all.py
 
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/player-*.png assets/control-bar-*.png
+          git add assets/
           if git diff --cached --quiet; then
             echo "No artwork changes."
           else
-            git commit -m "Rebuild player artwork [skip ci]"
+            git commit -m "Rebuild profile artwork [skip ci]"
             git push
           fi

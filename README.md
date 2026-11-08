@@ -1,3 +1,5 @@
+<img src="assets/stickers.png" align="right" width="40%" alt="">
+
 AI 真是太好用了你们知道吗
 
 - 在做 [MaaRacingMaster](https://github.com/Maa-RM/MaaRacingMaster)，巅峰极速的自动化平台

@@ -1,5 +1,13 @@
 # GitHub profile widgets
 
+## Temporary capability test
+
+<picture>
+  <source media="(max-width: 768px)" srcset="../assets/easter-egg.png">
+  <img src="../assets/stickers.png" width="45%" alt="">
+</picture>
+
+
 A GitHub profile README that is actually alive: a QQ-Music-style **"now playing"
 player** and a **Duolingo-style sticker board**, both rendered to static PNGs by
 GitHub Actions. No JavaScript, no external services — everything works inside

@@ -37,8 +37,8 @@ SCALE = 2  # supersampling factor; output is 2x the CSS size
 DEFAULT_BORDER = 9          # white outline width, logical px
 DEFAULT_ALPHA_THRESHOLD = 250  # alpha below this counts as background (0 = keep everything)
 EDGE_SMOOTH = 0.005         # cut-edge smoothing radius, fraction of source width
-SHADOW_OFFSET = 5           # drop shadow offset, logical px downwards
-SHADOW_BLUR = 12
+SHADOW_OFFSET_PCT = 0.024   # drop shadow offset, fraction of sticker width
+SHADOW_BLUR_PCT = 0.052     # drop shadow blur, fraction of sticker width
 SHADOW_OPACITY = 55         # 0-255
 SHADOW_COLOR = (32, 34, 42)
 
@@ -432,19 +432,25 @@ def build_layer(item: dict, defaults: dict):
     top = round(item["y"] * SCALE - sticker.height / 2)
 
     shadow, shadow_left, shadow_top = None, 0, 0
+    spread = 0
     if item.get("shadow", True):
+        # Shadow geometry scales linearly with the sticker's rendered width so
+        # small and large stickers keep the same relative shadow weight.
+        offset = max(2, round(sticker.width / SCALE * SHADOW_OFFSET_PCT)) * SCALE
+        blur = max(4, round(sticker.width / SCALE * SHADOW_BLUR_PCT)) * SCALE
+        spread = 2 * blur + offset
         # Blur on a padded canvas: the glow needs room to spread, otherwise it
         # is cut off at the sticker's own bounding box and leaves straight
         # edges behind.
-        m = SHADOW_BLUR * SCALE * 3
-        spread = Image.new("L", (sticker.width + 2 * m, sticker.height + 2 * m), 0)
-        spread.paste(sticker.getchannel("A"), (m, m))
-        blurred = spread.filter(ImageFilter.GaussianBlur(SHADOW_BLUR * SCALE))
-        shadow = Image.new("RGBA", spread.size, (0, 0, 0, 0))
-        shadow.paste(Image.new("RGBA", spread.size, SHADOW_COLOR + (SHADOW_OPACITY,)), (0, 0), blurred)
-        shadow_left, shadow_top = left - m, top + SHADOW_OFFSET * SCALE - m
+        m = blur * 3
+        padded = Image.new("L", (sticker.width + 2 * m, sticker.height + 2 * m), 0)
+        padded.paste(sticker.getchannel("A"), (m, m))
+        blurred = padded.filter(ImageFilter.GaussianBlur(blur))
+        shadow = Image.new("RGBA", padded.size, (0, 0, 0, 0))
+        shadow.paste(Image.new("RGBA", padded.size, SHADOW_COLOR + (SHADOW_OPACITY,)), (0, 0), blurred)
+        shadow_left, shadow_top = left - m, top + offset - m
 
-    return sticker, shadow, left, top, shadow_left, shadow_top
+    return sticker, shadow, left, top, shadow_left, shadow_top, spread
 
 
 def main():
@@ -457,9 +463,8 @@ def main():
         # truncating them at the configured frame: straight cuts at the sheet
         # edge are what a sticker sheet must never have. The shadow is only
         # followed to ~2 sigma — beyond that it is too faint to see.
-        spread = 2 * SHADOW_BLUR * SCALE + SHADOW_OFFSET * SCALE
         xs0, ys0, xs1, ys1 = [], [], [], []
-        for sticker, shadow, left, top, _, _ in layers:
+        for sticker, shadow, left, top, _, _, spread in layers:
             xs0 += [left, left - spread if shadow else left]
             ys0 += [top, top - spread if shadow else top]
             xs1 += [left + sticker.width, left + sticker.width + (spread if shadow else 0)]
@@ -477,10 +482,10 @@ def main():
     canvas = Image.new("RGBA", (width * SCALE, height * SCALE), (0, 0, 0, 0))
     # Every shadow under every sticker: a neighbour never casts a dirty grey
     # patch onto another sticker's face.
-    for _, shadow, _, _, sl, st in layers:
+    for _, shadow, _, _, sl, st, _ in layers:
         if shadow:
             paste_layer(canvas, shadow, sl + ox, st + oy)
-    for sticker, _, left, top, _, _ in layers:
+    for sticker, _, left, top, _, _, _ in layers:
         paste_layer(canvas, sticker, left + ox, top + oy)
 
     canvas.resize((width, height), Image.LANCZOS).save(ROOT / "assets/stickers.png", optimize=True)

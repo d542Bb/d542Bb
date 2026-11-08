@@ -1,15 +1,13 @@
 <table>
   <tr>
     <td>
+      <img src="assets/stickers.png" width="280" align="right" alt="">
       <p>AI 真是太好用了你们知道吗</p>
       <ul>
         <li>在做 <a href="https://github.com/Maa-RM/MaaRacingMaster">MaaRacingMaster</a>，巅峰极速的自动化平台</li>
         <li>偶尔在 <a href="https://space.bilibili.com/302222943">Bilibili</a> 发点东西</li>
       </ul>
       <p>👇我最近爱听的歌🎵</p>
-    </td>
-    <td rowspan="2" align="center" valign="top">
-      <img src="assets/stickers.png" width="193" alt="">
     </td>
   </tr>
   <tr>

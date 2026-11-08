@@ -64,6 +64,22 @@ Shared knobs live in the top-level `defaults` object and apply to every
 sticker unless overridden per sticker — including `size` (a shared default
 on-screen width) and the render toggles below.
 
+## Suggesting a layout
+
+After adding or removing stickers, or changing the canvas, let the tool
+propose sizes and positions:
+
+```bash
+python widgets/stickers/suggest.py
+```
+
+It splits an area budget across the stickers (config order = size hierarchy:
+put your hero first), then relaxes a seeded scatter until neighbouring
+stickers overlap by roughly 10–30% of the smaller one — a lively pile where
+nothing gets swallowed, and the hero is drawn on top. Suggested values are
+written back into `config.json`; tweak them by hand afterwards, and mark a
+sticker `"pinned": true` to keep it exactly where you set it.
+
 ## Semi-transparent sources
 
 The board needs every sticker to be one solid silhouette. Sources with soft or

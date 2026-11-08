@@ -1,13 +1,7 @@
 <div align="center">
 
-<pre>
-╭──────────────────────────────╮
-│ d542Bb@github:~$ cat .secret │
-╰──────────────────────────────╯
-</pre>
-
 <details>
-<summary>&#8203;</summary>
+<summary><img src="player.png" width="320" alt=""></summary>
 
 <br>
 

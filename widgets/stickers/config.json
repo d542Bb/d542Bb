@@ -1,5 +1,8 @@
 {
-  "canvas": { "width": 300, "height": 240 },
+  "canvas": {
+    "width": 227,
+    "height": 386
+  },
   "defaults": {
     "size": 78,
     "alpha_threshold": 250,
@@ -7,11 +10,47 @@
     "material": true
   },
   "stickers": [
-    { "src": "stickers/maarm.png",     "size": 118, "x": 150, "y": 126, "rotate": -4 },
-    { "src": "stickers/chibi.png",     "size": 76,  "x": 46,  "y": 44,  "rotate": -8 },
-    { "src": "stickers/bilibili.png",  "size": 58,  "x": 252, "y": 42,  "rotate": 10 },
-    { "src": "stickers/star-gold.png", "size": 64,  "x": 148, "y": 26,  "rotate": "random" },
-    { "src": "stickers/whale.png",     "size": 86,  "x": 252, "y": 180, "rotate": 8 },
-    { "src": "stickers/python.png",    "size": 76,  "x": 44,  "y": 182, "rotate": -10 }
+    {
+      "src": "stickers/chibi.png",
+      "size": 54,
+      "x": 53.2,
+      "y": 74.0,
+      "rotate": -8
+    },
+    {
+      "src": "stickers/bilibili.png",
+      "size": 46,
+      "x": 133.2,
+      "y": 67.5,
+      "rotate": 10
+    },
+    {
+      "src": "stickers/star-gold.png",
+      "size": 50,
+      "x": 50.5,
+      "y": 143.3,
+      "rotate": "random"
+    },
+    {
+      "src": "stickers/maarm.png",
+      "size": 88,
+      "x": 76.3,
+      "y": 204.9,
+      "rotate": -4
+    },
+    {
+      "src": "stickers/python.png",
+      "size": 56,
+      "x": 54.5,
+      "y": 290.2,
+      "rotate": -10
+    },
+    {
+      "src": "stickers/whale.png",
+      "size": 62,
+      "x": 127.8,
+      "y": 316.8,
+      "rotate": 8
+    }
   ]
 }

@@ -1,4 +1,4 @@
-<img src="assets/stickers.png" align="right" width="40%" alt="">
+<img src="assets/stickers.png" align="right" width="227" alt="">
 
 AI 真是太好用了你们知道吗
 

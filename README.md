@@ -2,7 +2,10 @@
   <tr>
     <td>
       <picture>
-        <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png">
+        <source media="(max-width: 479px)" srcset="assets/stickers-narrow.png">
+        <source media="(max-width: 639px)" srcset="assets/stickers-mid.png">
+        <source media="(max-width: 767px)" srcset="assets/stickers.png">
+        <source media="(max-width: 899px)" srcset="assets/stickers-mid.png">
         <img src="assets/stickers.png" width="47%" align="right" alt="">
       </picture>
       <p>AI 真是太好用了你们知道吗</p>

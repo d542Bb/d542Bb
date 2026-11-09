@@ -21,10 +21,19 @@ viewport) swap to a portrait rearrangement of the same stickers. Reference it
 
 ```html
 <picture>
-  <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png">
+  <source media="(max-width: 479px)" srcset="assets/stickers-narrow.png">
+  <source media="(max-width: 639px)" srcset="assets/stickers-mid.png">
+  <source media="(max-width: 767px)" srcset="assets/stickers.png">
+  <source media="(max-width: 899px)" srcset="assets/stickers-mid.png">
   <img src="assets/stickers.png" width="47%" align="right" alt="">
 </picture>
 ```
+
+The tiers exist because the text column grows faster than the board shrinks:
+the wide sheet's low profile fits the roomy desktop cell, a near-square pile
+fits the mid sizes (where GitHub's sidebar also squeezes the column), and the
+portrait pile fits phones. Each tier's height lands within ~±15% of the text
+block it sits beside, so the cell carries no big dead zones.
 
 - A percentage `width` keeps the text beside it at a fixed share of the column
   on every screen size — a fixed pixel width would crush the text on phones.

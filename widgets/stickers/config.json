@@ -55,6 +55,55 @@
     }
   ],
   "variants": {
+    "mid": {
+      "width": 230,
+      "height": 160,
+      "output": "stickers-mid.png",
+      "layout": [
+        {
+          "src": "stickers/chibi.png",
+          "size": 47,
+          "x": 120.6,
+          "y": 28.2,
+          "rotate": 6.2
+        },
+        {
+          "src": "stickers/bilibili.png",
+          "size": 45,
+          "x": 51.4,
+          "y": 61.2,
+          "rotate": -1.9
+        },
+        {
+          "src": "stickers/star-gold.png",
+          "size": 50,
+          "x": 73.7,
+          "y": 118.2,
+          "rotate": 9.5
+        },
+        {
+          "src": "stickers/python.png",
+          "size": 40,
+          "x": 177.7,
+          "y": 68.9,
+          "rotate": 11.6
+        },
+        {
+          "src": "stickers/whale.png",
+          "size": 47,
+          "x": 148.9,
+          "y": 119.4,
+          "rotate": 5.4
+        },
+        {
+          "src": "stickers/maarm.png",
+          "size": 57,
+          "x": 114.1,
+          "y": 79.0,
+          "rotate": 10.6
+        }
+      ]
+    },
     "narrow": {
       "width": 160,
       "height": 200,

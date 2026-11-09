@@ -70,7 +70,7 @@ def main():
 
     cover_axis = round(CARD_LEFT_W + ROW_GAP) + cover_cx
     print(f"album-art axis x = {cover_axis:.1f}")
-    scrolling = cap_bbox[2] - cap_bbox[0] >= ctrl_right.width - 1
+    scrolling = cap_bbox[2] >= ctrl_right.width - 2   # ink cut at the right edge
     if scrolling:
         print("caption is a marquee frame (ink spans the full canvas) — "
               "axis verified separately in static mode")
@@ -84,6 +84,22 @@ def main():
     bot_clip = ctrl_right.height - cap_bbox[3]
     print(f"caption vertical clearance: {top_clip}px above, {bot_clip}px below "
           f"({'OK' if top_clip > 0 and bot_clip > 0 else 'CLIPPED'})")
+
+    # caption window check: every frame's ink must stay inside the clip
+    # window (block-local 15..177 css -> 22.5..266 px at 1.5x) — text must
+    # never stick out past the album-art column's left edge
+    clip_left_px = 15 * SCALE
+    bad = 0
+    anim = Image.open(ASSETS / "control-right-light.webp")   # keep for n_frames
+    for i in range(anim.n_frames):
+        bb = anim.getchannel("A").getbbox()
+        if bb and bb[0] < clip_left_px - 1:
+            bad += 1
+        if i + 1 < anim.n_frames:
+            anim.seek(i + 1)
+    print(f"caption window: {anim.n_frames} frames checked, "
+          f"{bad} with ink left of the album-art column "
+          f"({'OK' if bad == 0 else 'OVERHANG'})")
 
 
 if __name__ == "__main__":

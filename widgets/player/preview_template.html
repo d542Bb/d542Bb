@@ -103,7 +103,12 @@ const STRIP_SPLIT = 400;     // animated caption block starts here
    the live profile page (h3 17.5px font); shift the caption axis left by
    the same amount so it still lands on the album-art axis */
 const SUMMARY_INDENT = 17;
-const ARTIST_STATIC_MAX = 170;   // captions up to this width render static
+/* the caption block also starts ~15css left of the album art (marker push
+   plus the gap GitHub inserts between paired images) — clip the caption to
+   the album-art column so text never sticks out past the cover's edges */
+const CAPTION_CLIP_LEFT = 15;
+const ARTIST_STATIC_MAX = 160;   // captions up to this width render static
+                                 // (the clip window is the cover column, 162)
 const ARTIST_SPEED = 15;     // marquee speed for long captions, css px/s
 const ARTIST_FPS = 15;       // effective caption refresh (frames dedupe)
 const ICON_CELLS = {                        // [x, y, w, h] in 2x sprite coords
@@ -341,7 +346,9 @@ function drawStripRight(canvas, theme, t) {
   const axis = CAPTION_CX - STRIP_SPLIT - SUMMARY_INDENT;   // album-art axis, minus the summary marker push
   const w = ctx.measureText(DATA.artist).width;
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, STRIP_W - STRIP_SPLIT, STRIP_H); ctx.clip();
+  ctx.beginPath();
+  ctx.rect(CAPTION_CLIP_LEFT, 0, STRIP_W - STRIP_SPLIT - CAPTION_CLIP_LEFT, STRIP_H);
+  ctx.clip();
   if (w <= ARTIST_STATIC_MAX) {
     ctx.fillText(DATA.artist, axis, 10);
   } else {

@@ -46,8 +46,8 @@ pieces to tune:
   pixel width would crush the text on phones). The stack generator turns it
   into the `width` percentage.
 - **Each variant's `width`** — the canvas it is designed for; the frame's
-  height should match your text height at that width (measure once, or build,
-  look and adjust; the motion preview in the repo wiki shows the whole axis).
+  height should match your text height at that width (measure your text block
+  once at a couple of window sizes, or just build, look and adjust).
 - **`max_sheet_px`** caps the saved PNG's raw pixel width. GitHub sizes its
   content-width table from an image's raw pixels, so a full 2× sheet can
   inflate the table and leave a hole beside your widest row. Keep the cap

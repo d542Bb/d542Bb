@@ -504,9 +504,17 @@ def render_board(items, frame, defaults, out_path, fit=True):
     for sticker, _, left, top, _, _, _ in layers:
         paste_layer(canvas, sticker, left + ox, top + oy)
 
-    # Keep the supersampled canvas: the README shows the PNG at roughly half
-    # its pixel width, so saving at 1x would have the browser upscale a
-    # blurry file instead of downscaling a sharp one.
+    # Keep the sheet sharp, but cap its raw pixel width: GitHub sizes its
+    # content-width README table from the image's raw pixels, so a full 2x
+    # sheet would inflate the table and leave a hole beside the player. 578
+    # plus the 20px image padding still fits the 599px column, and 578 is
+    # still ~2x the display box, so retina screens keep their sharpness.
+    sheet_limit = 578
+    if canvas.width > sheet_limit:
+        canvas = canvas.resize(
+            (sheet_limit, round(canvas.height * sheet_limit / canvas.width)),
+            Image.LANCZOS,
+        )
     canvas.save(out_path, optimize=True)
     box = f", display box {frame['width']}x{frame['height']}" if frame else ""
     print(f"wrote {out_path.name} ({canvas.width}x{canvas.height} px{box})")

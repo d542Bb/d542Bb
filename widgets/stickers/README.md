@@ -21,17 +21,17 @@ viewport) swap to a portrait rearrangement of the same stickers. Reference it
 
 ```html
 <picture>
-  <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png 2x">
-  <img src="assets/stickers.png" srcset="assets/stickers.png 2x" width="47%" align="right" alt="">
+  <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png">
+  <img src="assets/stickers.png" width="47%" align="right" alt="">
 </picture>
 ```
 
 - A percentage `width` keeps the text beside it at a fixed share of the column
   on every screen size — a fixed pixel width would crush the text on phones.
-- The `2x` descriptors matter beyond sharpness: without them the browser
-  computes layout from the PNG's raw pixel width (2×), which inflates the
-  README's content-sized table on desktop. With them it lays out at the
-  logical size and just renders sharper.
+- The saved PNG is capped at ~578 raw pixels wide on purpose: GitHub sizes its
+  content-width table from the image's raw pixels, so a full 2× sheet would
+  inflate the table and leave a hole beside the player. ~578 is still about
+  2× the display box, so retina screens keep their sharpness.
 - GitHub pads README images by 20px; that padding is the gap between text and
   stickers, so the PNG needs none baked in.
 - The PNG is saved at 2× and auto-fits the stickers, then is padded to exactly

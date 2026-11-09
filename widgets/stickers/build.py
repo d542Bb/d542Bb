@@ -456,7 +456,7 @@ def build_layer(item: dict, defaults: dict):
     return sticker, shadow, left, top, shadow_left, shadow_top, spread
 
 
-def render_board(items, frame, defaults, out_path, fit=True):
+def render_board(items, frame, defaults, out_path, fit=True, sheet_limit=578):
     """Compose one board PNG. `frame` is the display box ({width, height} in
     CSS px) the README shows it at: the sheet is padded to exactly that
     aspect, so the width attribute alone pins both displayed dimensions."""
@@ -506,10 +506,9 @@ def render_board(items, frame, defaults, out_path, fit=True):
 
     # Keep the sheet sharp, but cap its raw pixel width: GitHub sizes its
     # content-width README table from the image's raw pixels, so a full 2x
-    # sheet would inflate the table and leave a hole beside the player. 578
-    # plus the 20px image padding still fits the 599px column, and 578 is
-    # still ~2x the display box, so retina screens keep their sharpness.
-    sheet_limit = 578
+    # sheet can inflate the table. Keep the cap under your widest row's
+    # content width minus the 20px image padding — the default fits a 599px
+    # column — while staying ~2x the display box so retina stays sharp.
     if canvas.width > sheet_limit:
         canvas = canvas.resize(
             (sheet_limit, round(canvas.height * sheet_limit / canvas.width)),
@@ -524,8 +523,10 @@ def main():
     cfg = load_config()
     defaults = cfg.get("defaults", {})
     fit = cfg.get("fit", defaults.get("fit", True))
+    sheet_limit = cfg.get("max_sheet_px", defaults.get("max_sheet_px", 578))
     frame = cfg.get("target") or cfg.get("canvas")
-    render_board(cfg["stickers"], frame, defaults, ROOT / "assets/stickers.png", fit)
+    render_board(cfg["stickers"], frame, defaults, ROOT / "assets/stickers.png", fit,
+                 sheet_limit)
 
     for name, variant in cfg.get("variants", {}).items():
         layout = variant.get("layout")
@@ -538,7 +539,7 @@ def main():
         items = [{**by_src.get(e["src"], {}), **e} for e in layout]
         out = ROOT / "assets" / variant.get("output", f"stickers-{name}.png")
         render_board(items, {"width": variant["width"], "height": variant["height"]},
-                     defaults, out)
+                     defaults, out, sheet_limit=sheet_limit)
 
 
 if __name__ == "__main__":

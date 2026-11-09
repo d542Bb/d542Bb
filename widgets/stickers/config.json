@@ -3,6 +3,7 @@
     "width": 300,
     "height": 141
   },
+  "max_sheet_px": 578,
   "defaults": {
     "size": 78,
     "alpha_threshold": 250,

@@ -54,6 +54,10 @@ not parse inside HTML table cells, so the text is written as HTML — it is only
 a handful of tags (see the top of the root [`README.md`](../README.md) for a
 working copy).
 
+This table layout is the sample, not a requirement — a plain
+`<picture> ... align="right"` float before your text also works and reflows
+more freely; the table just keeps everything packed next to short intro lines.
+
 Sizing notes learned the hard way:
 
 - GitHub's stylesheet pads table cells (~13px on each side) and floats README

@@ -15,9 +15,10 @@ Preview (sample stickers — replace them with your own):
 
 ## Use it on your profile
 
-The board is responsive: the wide sheet shows on desktop, and phones (≤480px
-viewport) swap to a portrait rearrangement of the same stickers. Reference it
-**before** the text it should sit beside:
+The board is responsive: one PNG per screen band, swapped by a `<picture>`.
+The markup below is the sample shipped in the root README — reference the
+board **before** the text it should sit beside, and adapt the numbers to your
+own layout (the recipe underneath explains each one):
 
 ```html
 <picture>
@@ -29,25 +30,27 @@ viewport) swap to a portrait rearrangement of the same stickers. Reference it
 </picture>
 ```
 
-The tiers exist because the text column grows faster than the board shrinks:
-the wide sheet's low profile fits the roomy desktop cell, a near-square pile
-fits the mid sizes (where GitHub's sidebar also squeezes the column), and the
-portrait pile fits phones. Each tier's height lands within ~±15% of the text
-block it sits beside, so the cell carries no big dead zones.
+The sample's three shapes and breakpoints follow that recipe for GitHub's
+profile layout (the text column grows faster than the board shrinks, and the
+sidebar squeezes the column in a mid window band); with different text or a
+different page, your numbers will differ. The pieces to tune:
 
-- A percentage `width` keeps the text beside it at a fixed share of the column
-  on every screen size — a fixed pixel width would crush the text on phones.
-- The saved PNG is capped at ~578 raw pixels wide on purpose: GitHub sizes its
-  content-width table from the image's raw pixels, so a full 2× sheet would
-  inflate the table and leave a hole beside the player. ~578 is still about
-  2× the display box, so retina screens keep their sharpness.
-- GitHub pads README images by 20px; that padding is the gap between text and
-  stickers, so the PNG needs none baked in.
-- The PNG is saved at 2× and auto-fits the stickers, then is padded to exactly
-  the `target` aspect — so the width percentage alone pins both the width and
-  the height the board occupies. Aim the target frames at the hole beside your
-  text (see the fields below), and pick the percentage so
-  `target.width ≈ percentage × your column width`.
+- **The percentage `width`** sets the board's share of the column, at every
+  screen size (a fixed pixel width would crush the text on phones). Pick the
+  share you want the stickers to occupy.
+- **The display boxes** (`target` and each variant's `width`/`height`) set
+  each PNG's aspect — the height the board occupies. Aim each one at the
+  height of the text beside it: measure your text block at a couple of window
+  sizes (or just build, look and adjust), then set the frames to match —
+  wide-and-low for a roomy cell, square-ish for a squeezed one, portrait for
+  phones.
+- **`max_sheet_px`** caps the saved PNG's raw pixel width. GitHub sizes its
+  content-width table from an image's raw pixels, so a full 2× sheet can
+  inflate the table and leave a hole beside your widest row. Keep the cap
+  under your widest row's content width minus 20px (the padding GitHub puts
+  on README images — that padding is also the gap between text and stickers,
+  so the PNG needs none baked in), while staying ~2× the display box so
+  retina stays sharp.
 - Opaque sources (photos, screenshots) also work — they are automatically
   rounded and framed like a die-cut sticker.
 
@@ -59,6 +62,7 @@ then push — the **Build profile artwork** action regenerates the board.
 | Field | Meaning |
 | --- | --- |
 | `target.width` / `height` | Display box of the desktop board, in CSS px. The build pads the PNG to exactly this aspect; the README's percentage scales it. |
+| `max_sheet_px` | Cap on the saved PNG's raw pixel width (default 578). Keep it under your widest row's content width minus 20px, or the table may inflate; see "Use it on your profile". |
 | `stickers[].src` | Image path, relative to this folder. |
 | `stickers[].size` | On-screen width in px on the desktop board; height scales to match. Unspecified stickers fall back to `defaults.size`. |
 | `stickers[].x` / `y` | Centre position of the sticker on the desktop board. |

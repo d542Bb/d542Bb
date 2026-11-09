@@ -50,8 +50,8 @@ jobs:
           [ -n "${{ inputs.end }}" ] && args+=(--end "${{ inputs.end }}")
           python widgets/player/fetch_song.py "${args[@]}"
 
-      - name: Render player animations
-        run: python widgets/player/render_gif.py
+      - name: Render player animation
+        run: python widgets/player/render_clip.py
 
       - name: Regenerate static artwork
         run: python widgets/build_all.py

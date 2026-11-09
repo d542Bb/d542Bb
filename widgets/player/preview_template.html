@@ -115,17 +115,19 @@ const STRIP_ICONS = [
 const PALETTES = {
   light: {
     text: "#333333", muted: "#666666", track: "#e6e6e6", accent: "#4d4d4d",
-    lyricNext: "rgba(102,102,102,0.51)", lyricAfter: "rgba(102,102,102,0.27)",
+    /* fading lyric rows are pre-blended solid grays (they used to be
+       translucent; translucency cannot survive binary alpha) */
+    lyricNext: "rgb(168,168,168)", lyricAfter: "rgb(213,213,213)",
   },
   dark: {
     text: "#e6edf3", muted: "#969ea8", track: "#3e444c", accent: "#c8d0da",
-    lyricNext: "rgba(150,158,168,0.51)", lyricAfter: "rgba(150,158,168,0.27)",
+    lyricNext: "rgb(96,101,107)", lyricAfter: "rgb(60,65,70)",
   },
 };
 const TINTS = { icons: "text", dot: "accent" };  // dark-theme tint sources
 
 const FONT = "'Liberation Sans', Arial, sans-serif";
-const BASE_FPS = 25;        // scheduler tick the GIF follows (4 cs per frame)
+const BASE_FPS = 30;        // scheduler tick the GIF follows (3 cs per frame)
 const MARQUEE_SPEED = 30;   // css px per second
 const MARQUEE_GAP = 60;
 const SLIDE_TIME = 0.3;     // lyric slide duration, seconds

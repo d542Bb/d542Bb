@@ -108,16 +108,15 @@ def build_palette(frames):
 def quantize_frame(frame, palette, lut):
     """Collapse a frame onto the shared palette but keep a real alpha plane:
     the 256-color picture is what compresses well, while alpha lets the card
-    blend into any page theme. Alpha is binarized — smooth gradients on the
-    text edges would dominate the lossless alpha plane's cost — which is
-    exactly the look the GIF pipeline had."""
+    blend into any page theme. Alpha is stepped to 4 levels — a full gradient
+    dominates the lossless alpha plane's cost, while two levels (the GIF
+    look) leaves hard, scratchy edges once the browser upscales the 1x image."""
     rgb = frame.convert("RGB")                      # fully transparent px = black
     q = rgb.quantize(palette=palette, dither=Image.Dither.NONE)
     q = q.point(lut)
     out = q.convert("RGB")
-    # threshold 64: canvas text is solid or pre-blended solid gray, so only
-    # downsampling residue lives below it; anything that low is background
-    out.putalpha(frame.getchannel("A").point(lambda a: 255 if a >= 64 else 0))
+    out.putalpha(frame.getchannel("A").point(
+        lambda a: min(255, round(a / 85) * 85)))
     return out
 
 
@@ -163,13 +162,15 @@ def main():
     workdir = Path(tempfile.mkdtemp(prefix="player-frames-"))
     try:
         for theme in ("light", "dark"):
+            scaled = downscale(grabbed[theme])
             # cover half: identical in both themes, one static transparent PNG
-            cover = grabbed[theme][0].crop((LEFT_W, 0, grabbed[theme][0].width,
-                                            grabbed[theme][0].height))
+            # (crop the 1x frame — the raw canvas is 2x and would bleed the
+            # animated middle of the card into the cover image)
+            cover = scaled[0].crop((LEFT_W, 0, scaled[0].width, scaled[0].height))
             cover_path = ROOT / "assets" / "player-cover.png"
             cover.save(cover_path, optimize=True)
 
-            left = [f.crop((0, 0, LEFT_W, f.height)) for f in downscale(grabbed[theme])]
+            left = [f.crop((0, 0, LEFT_W, f.height)) for f in scaled]
             palette, lut = build_palette(left)
             quantized = [quantize_frame(f, palette, lut) for f in left]
             dest = ROOT / "assets" / f"player-left-{theme}.webp"

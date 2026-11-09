@@ -15,6 +15,10 @@ def main():
         print(f"== {script.parent.name} ==")
         subprocess.run([sys.executable, str(script)], check=True)
 
+    bust = WIDGETS / "bust_cache.py"
+    if bust.exists():
+        subprocess.run([sys.executable, str(bust)], check=True)
+
 
 if __name__ == "__main__":
     main()

@@ -31,8 +31,11 @@
         <details>
           <summary>
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-bar-dark.png?v=a1690f">
-              <img src="assets/control-bar-light.png?v=cc39fd" width="577" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-left-dark.png?v=a1690f">
+              <img src="assets/control-left-light.png?v=cc39fd" width="400" alt="">
+            </picture><picture>
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=a1690f">
+              <img src="assets/control-right-light.webp?v=cc39fd" width="177" alt="">
             </picture>
           </summary>
           <br>

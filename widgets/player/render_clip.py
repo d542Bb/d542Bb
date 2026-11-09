@@ -1,15 +1,22 @@
-"""Render the animated player card as a lossy animated WebP with real alpha.
+"""Render the animated player card as lossless animated WebP assets.
 
 Pipeline: rebuild preview.html from the config, open it in headless
-Chromium, walk the per-frame schedule the page computed, pull each frame
-off the canvas, crop it to the animated left half, and hand the RGBA
-frames to libwebp. The encoder keeps transparency per pixel (the card
-blends into any GitHub theme — no pinned background), uses replace
-blending where frames have transparent regions (sliding lyrics erase
-cleanly), and shrinks static stretches to tiny sub-rectangles on its own.
+Chromium, walk the per-frame schedule the page computed, pull frames off
+the canvases, and encode:
 
-The right half (album art) never animates, so it ships once as a plain
-transparent PNG next to the animation.
+  player-left-{theme}.webp    animated card half (title/lyrics/progress)
+  player-cover.png            static transparent album-art half
+  control-left-{theme}.png    static transport + volume strip
+  control-right-{theme}.webp  artist caption — a slow marquee anchored to
+                              the album-art axis when the name is long,
+                              a single static frame when it is short
+
+Frames are captured at 2x from the canvases, downscaled to OUTPUT_SCALE
+(1.5 = the README's display size plus half), collapsed onto a shared
+256-color palette with a real alpha plane, and packed losslessly: VP8L's
+entropy coding is far ahead of the GIF's LZW on these flat colors, the
+alpha plane stays exact, and libwebp picks replace blending for frames
+with transparent regions so sliding lyrics erase cleanly on any theme.
 
 Usage: python widgets/player/render_clip.py [path/to/config.json]
 Needs: playwright (Chromium / Edge), Pillow.
@@ -18,19 +25,20 @@ Needs: playwright (Chromium / Edge), Pillow.
 import base64
 import io
 import shutil
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 WIDGET = Path(__file__).resolve().parent
 ROOT = WIDGET.parents[1]
-LEFT_W = 400                     # animated half; card is 599 wide
+LEFT_W = 400                     # animated card half, css px; card is 599
+STRIP_SPLIT = 400                # animated caption half, css px; strip is 577
 CAPTURE_CHUNK = 20               # frames per evaluate round-trip
-FPS_OPTION = "30"                # matches BASE_FPS in the preview template
+FPS_OPTION = "25"                # matches BASE_FPS in the preview template
+OUTPUT_SCALE = 1.5               # render density over the css display size
 
 
 def launch_chromium(pw):
@@ -45,32 +53,45 @@ def launch_chromium(pw):
 
 
 def grab_frames(page, frames):
-    """Pull every scheduled frame off both card canvases as PIL images."""
+    """Pull every scheduled frame off the four animated canvases as PIL
+    images, plus one static grab of the transport-strip left blocks."""
     started = time.time()
-    light, dark = [], []
+    streams = {"cardL": [], "cardD": [], "stripRL": [], "stripRD": []}
+    keys = ("cardL", "cardD", "stripRL", "stripRD")
     for i in range(0, len(frames), CAPTURE_CHUNK):
         chunk = frames[i:i + CAPTURE_CHUNK]
         data = page.evaluate(
             """(ts) => ts.map(t => {
                  state.t = t;
                  render();
-                 return [cardLight.toDataURL('image/png'),
-                         cardDark.toDataURL('image/png')];
+                 return [cardLight, cardDark,
+                         document.getElementById('stripr-light'),
+                         document.getElementById('stripr-dark')].map(
+                   c => c.toDataURL('image/png'));
                })""",
             [f["t"] for f in chunk],
         )
-        for light_uri, dark_uri in data:
-            for sink, uri in ((light, light_uri), (dark, dark_uri)):
+        for tuple_ in data:
+            for key, uri in zip(keys, tuple_):
                 raw = base64.b64decode(uri.split(",", 1)[1])
-                sink.append(Image.open(io.BytesIO(raw)).convert("RGBA"))
+                streams[key].append(Image.open(io.BytesIO(raw)).convert("RGBA"))
         print(f"  captured {min(i + CAPTURE_CHUNK, len(frames))}/{len(frames)} "
               f"frames ({time.time() - started:.0f}s)")
-    return {"light": light, "dark": dark}
+    # transport strip left blocks: static, one grab each
+    streams["stripLL"] = [
+        Image.open(io.BytesIO(base64.b64decode(
+            u.split(",", 1)[1]))).convert("RGBA")
+        for u in page.evaluate(
+            """() => [document.getElementById('strip-light'),
+                      document.getElementById('strip-dark')].map(
+                c => c.toDataURL('image/png'))""")
+    ]
+    return streams
 
 
 def downscale(frames):
-    """README shows the card at 599 css px, so 1x is the native size."""
-    target = (frames[0].width // 2, frames[0].height // 2)
+    target = (round(frames[0].width * OUTPUT_SCALE / 2),
+              round(frames[0].height * OUTPUT_SCALE / 2))
     return [f.resize(target, Image.LANCZOS) for f in frames]
 
 
@@ -110,7 +131,7 @@ def quantize_frame(frame, palette, lut):
     the 256-color picture is what compresses well, while alpha lets the card
     blend into any page theme. Alpha is stepped to 4 levels — a full gradient
     dominates the lossless alpha plane's cost, while two levels (the GIF
-    look) leaves hard, scratchy edges once the browser upscales the 1x image."""
+    look) leaves hard, scratchy edges once the browser upscales the image."""
     rgb = frame.convert("RGB")                      # fully transparent px = black
     q = rgb.quantize(palette=palette, dither=Image.Dither.NONE)
     q = q.point(lut)
@@ -120,12 +141,23 @@ def quantize_frame(frame, palette, lut):
     return out
 
 
-def encode_webp(frames, delays_cs, dest):
-    """Lossless animated WebP over palette-collapsed frames: VP8L's entropy
-    coding is far ahead of the GIF's LZW on the same pixels, the alpha plane
-    stays exact, and libwebp picks replace blending for frames with
-    transparent regions so sliding lyrics erase cleanly."""
-    durations = [round(cs * 10) for cs in delays_cs]   # centiseconds -> ms
+def dedupe(frames, durations_ms):
+    """Collapse runs of identical frames into one frame with a longer
+    duration — the artist caption moves sub-pixel per tick, so roughly a
+    third of its frames carry no change at all."""
+    out_f, out_d = [], []
+    for f, d in zip(frames, durations_ms):
+        if out_f and ImageChops.difference(
+                f.convert("RGBA"), out_f[-1].convert("RGBA")).getbbox() is None:
+            out_d[-1] += d
+        else:
+            out_f.append(f)
+            out_d.append(d)
+    return out_f, out_d
+
+
+def encode_webp(frames, durations_ms, dest):
+    durations = [round(d) for d in durations_ms]
     frames[0].save(
         dest, format="WEBP", save_all=True, append_images=frames[1:],
         duration=durations, loop=0,
@@ -155,28 +187,54 @@ def main():
         }}""")
         print(f"schedule: {len(frames)} frames "
               f"({sum(f['delayCs'] for f in frames) / 100:.1f}s total)")
-        grabbed = grab_frames(page, frames)
+        streams = grab_frames(page, frames)
         browser.close()
 
-    delays = [f["delayCs"] for f in frames]
+    delays_cs = [f["delayCs"] for f in frames]
+    durations_ms = [round(cs * 10) for cs in delays_cs]
+    assets = ROOT / "assets"
     workdir = Path(tempfile.mkdtemp(prefix="player-frames-"))
     try:
-        for theme in ("light", "dark"):
-            scaled = downscale(grabbed[theme])
-            # cover half: identical in both themes, one static transparent PNG
-            # (crop the 1x frame — the raw canvas is 2x and would bleed the
-            # animated middle of the card into the cover image)
-            cover = scaled[0].crop((LEFT_W, 0, scaled[0].width, scaled[0].height))
-            cover_path = ROOT / "assets" / "player-cover.png"
-            cover.save(cover_path, optimize=True)
+        # the card canvases are full-width (2x of 599 css); crop the animated
+        # left half (800 of 1198) before downscaling
+        card_l = downscale([f.crop((0, 0, 800, f.height)) for f in streams["cardL"]])
+        card_d = downscale([f.crop((0, 0, 800, f.height)) for f in streams["cardD"]])
+        strip_rl = downscale(streams["stripRL"])
+        strip_rd = downscale(streams["stripRD"])
+        strip_ll = downscale(streams["stripLL"])
+        split_x = round(LEFT_W * OUTPUT_SCALE)          # 600 at 1.5x
 
-            left = [f.crop((0, 0, LEFT_W, f.height)) for f in scaled]
-            palette, lut = build_palette(left)
-            quantized = [quantize_frame(f, palette, lut) for f in left]
-            dest = ROOT / "assets" / f"player-left-{theme}.webp"
-            size = encode_webp(quantized, delays, dest)
-            print(f"wrote {dest.relative_to(ROOT)} ({size / 1024:.0f} KB, "
-                  f"{len(quantized)} frames, cover {cover_path.stat().st_size / 1024:.0f} KB)")
+        # static cover half (identical in both themes): the right slice of
+        # the full card (2x 800..1198 = css 400..599)
+        cover_full = streams["cardL"][0].crop(
+            (800, 0, streams["cardL"][0].width, streams["cardL"][0].height))
+        cover = cover_full.resize(
+            (round(cover_full.width * OUTPUT_SCALE / 2),
+             round(cover_full.height * OUTPUT_SCALE / 2)), Image.LANCZOS)
+        cover_path = assets / "player-cover.png"
+        cover.save(cover_path, optimize=True)
+        print(f"wrote player-cover.png ({cover_path.stat().st_size / 1024:.0f} KB)")
+
+        for theme, card in (("light", card_l), ("dark", card_d)):
+            dest = assets / f"player-left-{theme}.webp"
+            palette, lut = build_palette(card)
+            quantized = [quantize_frame(f, palette, lut) for f in card]
+            size = encode_webp(quantized, durations_ms, dest)
+            print(f"wrote {dest.name} ({size / 1024:.0f} KB, {len(quantized)} frames)")
+
+        for theme, strip_frames, strip_left in (
+                ("light", strip_rl, strip_ll[0]), ("dark", strip_rd, strip_ll[1])):
+            # transport strip left block canvas: transport + volume (static);
+            # right block canvas: artist caption (animated only when long)
+            strip_left.save(assets / f"control-left-{theme}.png", optimize=True)
+            frames_r, durs_r = dedupe(strip_frames, durations_ms)
+            scrolling = len(frames_r) > 1
+            dest = assets / f"control-right-{theme}.webp"
+            palette, lut = build_palette(frames_r)
+            quantized = [quantize_frame(f, palette, lut) for f in frames_r]
+            size = encode_webp(quantized, durs_r, dest)
+            mode = "marquee" if scrolling else "static"
+            print(f"wrote {dest.name} ({size / 1024:.0f} KB, {len(quantized)} frames, {mode})")
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 

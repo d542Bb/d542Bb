@@ -37,7 +37,7 @@ jobs:
 
       - name: Install Pillow and Playwright
         run: |
-          pip install Pillow playwright
+          pip install Pillow==12.3.0 playwright
           sudo apt-get update
           sudo apt-get install -y fonts-liberation
           playwright install chromium --with-deps

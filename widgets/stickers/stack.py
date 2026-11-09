@@ -65,7 +65,12 @@ def main():
     bands[-1]["end"] = V_MAX
 
     def src_for(name):
-        return "assets/stickers.png" if name == "main" else outs[name]
+        if name == "main":
+            return "assets/stickers.png"
+        out = outs[name]
+        # the build writes variant outputs into assets/, so the README's
+        # relative srcset needs the folder prefix to resolve
+        return out if out.startswith("assets/") else f"assets/{out}"
 
     lines = ["<picture>"]
     for i, b in enumerate(bands[:-1]):

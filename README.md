@@ -2,13 +2,13 @@
   <tr>
     <td>
       <picture>
-        <source media="(max-width: 416px)" srcset="stickers-phone.png?v=b91b93">
-        <source media="(min-width: 417px) and (max-width: 461px)" srcset="stickers-slim.png?v=8f4b41">
-        <source media="(min-width: 462px) and (max-width: 514px)" srcset="stickers-compact.png?v=eeb3a6">
-        <source media="(min-width: 515px) and (max-width: 631px)" srcset="stickers-wide.png?v=6dce05">
+        <source media="(max-width: 416px)" srcset="assets/stickers-phone.png?v=b91b93">
+        <source media="(min-width: 417px) and (max-width: 461px)" srcset="assets/stickers-slim.png?v=8f4b41">
+        <source media="(min-width: 462px) and (max-width: 514px)" srcset="assets/stickers-compact.png?v=eeb3a6">
+        <source media="(min-width: 515px) and (max-width: 631px)" srcset="assets/stickers-wide.png?v=6dce05">
         <source media="(min-width: 632px) and (max-width: 770px)" srcset="assets/stickers.png?v=dc50df">
-        <source media="(min-width: 771px) and (max-width: 802px)" srcset="stickers-compact.png?v=eeb3a6">
-        <source media="(min-width: 803px) and (max-width: 919px)" srcset="stickers-wide.png?v=6dce05">
+        <source media="(min-width: 771px) and (max-width: 802px)" srcset="assets/stickers-compact.png?v=eeb3a6">
+        <source media="(min-width: 803px) and (max-width: 919px)" srcset="assets/stickers-wide.png?v=6dce05">
         <img src="assets/stickers.png?v=dc50df" width="47%" align="right" alt="">
       </picture>
       <p>AI 真是太好用了你们知道吗</p>

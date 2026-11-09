@@ -23,6 +23,14 @@ ROOT = WIDGET.parents[1]
 PAGE_BG = {"light": (255, 255, 255), "dark": (13, 17, 23)}
 TRANSPARENT_INDEX = 255     # reserved palette slot, used by the 4 corners only
 CAPTURE_CHUNK = 20          # frames per evaluate round-trip
+OUTPUT_SCALE = 1            # 1 = native README size (599x172); 2 = retina-sharp, 4x bytes
+
+
+def downscale(frames):
+    if OUTPUT_SCALE >= 2:
+        return frames
+    target = (frames[0].width // 2, frames[0].height // 2)
+    return [f.resize(target, Image.LANCZOS) for f in frames]
 
 
 def launch_chromium(pw):
@@ -118,6 +126,7 @@ def quantize_frame(frame, palette, lut):
 
 
 def encode_gif(frames, delays_cs, dest, bg_rgb):
+    frames = downscale(frames)
     flattened = composite(frames, bg_rgb)
     palette, lut = build_palette(flattened, bg_rgb)
     # No dithering: Floyd-Steinberg error diffusion smears quantization noise

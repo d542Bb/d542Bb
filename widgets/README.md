@@ -29,7 +29,7 @@ Rendered by this very repo (see it live on [the profile](https://github.com/d542
 | Widget | Generates | Docs |
 | --- | --- | --- |
 | [`player/`](player/) | `assets/player-{light,dark}.png`, `assets/control-bar-{light,dark}.png` | [player/README.md](player/README.md) |
-| [`stickers/`](stickers/) | `assets/stickers.png` + `stickers-mid.png` + `stickers-narrow.png` (one shape per screen band) | [stickers/README.md](stickers/README.md) |
+| [`stickers/`](stickers/) | `assets/stickers.png` + one PNG per screen band (`stickers-{phone,slim,compact,wide}.png`) | [stickers/README.md](stickers/README.md) |
 
 ## How it is put together
 
@@ -63,11 +63,12 @@ Sizing notes learned the hard way:
 - GitHub's stylesheet pads table cells (~13px on each side) and floats README
   images with 20px of left padding — that padding is the gap between text and
   stickers, so the PNG needs none baked in.
-- The sticker board is a `<picture>` with a percentage width and three board
-  shapes: the wide sheet on desktop, a near-square pile in the mid range and
-  a portrait pile on phones (breakpoints at 480/640/768/900). The percentage
-  keeps the text's share of the column stable at every screen size — a fixed
-  pixel width would crush the text on phones.
+- The sticker board is a `<picture>` stack with a percentage width and one
+  board shape per screen band (portrait piles for phones, a near-square pile
+  in the mid range, wide sheets on desktop — tiers and breakpoints live in
+  the sticker config; `python widgets/stickers/stack.py` emits the markup).
+  The percentage keeps the text's share of the column stable at every screen
+  size — a fixed pixel width would crush the text on phones.
 - The board PNG's aspect (its `target` frame) decides the height it occupies —
   aim it at the height of your text block so the cell carries no dead space.
 - Individual stickers inside the composed board can't carry links — if you

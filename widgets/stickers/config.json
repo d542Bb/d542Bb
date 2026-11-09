@@ -1,7 +1,8 @@
 {
+  "share": 0.47,
   "target": {
-    "width": 300,
-    "height": 141
+    "width": 282,
+    "height": 128
   },
   "max_sheet_px": 578,
   "defaults": {
@@ -13,146 +14,68 @@
   "stickers": [
     {
       "src": "stickers/chibi.png",
-      "size": 52,
-      "x": 156.1,
-      "y": 46.4,
-      "rotate": -3.2
+      "size": 47,
+      "x": 125.9,
+      "y": 33.3,
+      "rotate": -6.7
     },
     {
       "src": "stickers/bilibili.png",
-      "size": 49,
-      "x": 67.7,
-      "y": 87.8,
-      "rotate": -4.2
+      "size": 44,
+      "x": 65.8,
+      "y": 52.6,
+      "rotate": 1.7
     },
     {
       "src": "stickers/star-gold.png",
-      "size": 54,
-      "x": 79.2,
-      "y": 40.7,
-      "rotate": 4.1
+      "size": 49,
+      "x": 93.5,
+      "y": 92.4,
+      "rotate": -1.2
     },
     {
       "src": "stickers/python.png",
-      "size": 44,
-      "x": 231.7,
-      "y": 48.8,
-      "rotate": -4.8
+      "size": 39,
+      "x": 204.1,
+      "y": 40.0,
+      "rotate": 6.2
     },
     {
       "src": "stickers/whale.png",
-      "size": 51,
-      "x": 229.1,
-      "y": 92.9,
-      "rotate": -2.6
+      "size": 46,
+      "x": 228.5,
+      "y": 82.8,
+      "rotate": 6.5
     },
     {
       "src": "stickers/maarm.png",
-      "size": 62,
-      "x": 149.3,
-      "y": 98.6,
-      "rotate": 6.2,
+      "size": 56,
+      "x": 159.6,
+      "y": 77.3,
+      "rotate": -8.7,
       "hero": true
     }
   ],
   "variants": {
-    "mid": {
-      "width": 230,
-      "height": 160,
-      "output": "stickers-mid.png",
-      "layout": [
-        {
-          "src": "stickers/chibi.png",
-          "size": 47,
-          "x": 120.6,
-          "y": 28.2,
-          "rotate": 6.2
-        },
-        {
-          "src": "stickers/bilibili.png",
-          "size": 45,
-          "x": 51.4,
-          "y": 61.2,
-          "rotate": -1.9
-        },
-        {
-          "src": "stickers/star-gold.png",
-          "size": 50,
-          "x": 73.7,
-          "y": 118.2,
-          "rotate": 9.5
-        },
-        {
-          "src": "stickers/python.png",
-          "size": 40,
-          "x": 177.7,
-          "y": 68.9,
-          "rotate": 11.6
-        },
-        {
-          "src": "stickers/whale.png",
-          "size": 47,
-          "x": 148.9,
-          "y": 119.4,
-          "rotate": 5.4
-        },
-        {
-          "src": "stickers/maarm.png",
-          "size": 57,
-          "x": 114.1,
-          "y": 79.0,
-          "rotate": 10.6
-        }
-      ]
+    "phone": {
+      "width": 130,
+      "height": 216,
+      "output": "stickers-phone.png"
     },
-    "narrow": {
-      "width": 160,
-      "height": 200,
-      "output": "stickers-narrow.png",
-      "layout": [
-        {
-          "src": "stickers/chibi.png",
-          "size": 43,
-          "x": 73.9,
-          "y": 42.0,
-          "rotate": -7.2
-        },
-        {
-          "src": "stickers/bilibili.png",
-          "size": 41,
-          "x": 47.6,
-          "y": 99.9,
-          "rotate": -5.4
-        },
-        {
-          "src": "stickers/star-gold.png",
-          "size": 45,
-          "x": 49.9,
-          "y": 152.2,
-          "rotate": -4.2
-        },
-        {
-          "src": "stickers/python.png",
-          "size": 36,
-          "x": 125.7,
-          "y": 46.9,
-          "rotate": -3.4
-        },
-        {
-          "src": "stickers/whale.png",
-          "size": 42,
-          "x": 95.0,
-          "y": 148.4,
-          "rotate": 6.0
-        },
-        {
-          "src": "stickers/maarm.png",
-          "size": 49,
-          "x": 99.4,
-          "y": 94.7,
-          "rotate": 9.3
-        }
-      ]
+    "slim": {
+      "width": 145,
+      "height": 194,
+      "output": "stickers-slim.png"
+    },
+    "compact": {
+      "width": 172,
+      "height": 150,
+      "output": "stickers-compact.png"
+    },
+    "wide": {
+      "width": 195,
+      "height": 128,
+      "output": "stickers-wide.png"
     }
   }
 }

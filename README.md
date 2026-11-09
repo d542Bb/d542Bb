@@ -2,10 +2,13 @@
   <tr>
     <td>
       <picture>
-        <source media="(max-width: 479px)" srcset="assets/stickers-narrow.png">
-        <source media="(max-width: 639px)" srcset="assets/stickers-mid.png">
-        <source media="(max-width: 767px)" srcset="assets/stickers.png">
-        <source media="(max-width: 899px)" srcset="assets/stickers-mid.png">
+        <source media="(max-width: 416px)" srcset="stickers-phone.png">
+        <source media="(min-width: 417px) and (max-width: 461px)" srcset="stickers-slim.png">
+        <source media="(min-width: 462px) and (max-width: 514px)" srcset="stickers-compact.png">
+        <source media="(min-width: 515px) and (max-width: 631px)" srcset="stickers-wide.png">
+        <source media="(min-width: 632px) and (max-width: 770px)" srcset="assets/stickers.png">
+        <source media="(min-width: 771px) and (max-width: 802px)" srcset="stickers-compact.png">
+        <source media="(min-width: 803px) and (max-width: 919px)" srcset="stickers-wide.png">
         <img src="assets/stickers.png" width="47%" align="right" alt="">
       </picture>
       <p>AI 真是太好用了你们知道吗</p>

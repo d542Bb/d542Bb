@@ -15,35 +15,39 @@ Preview (sample stickers — replace them with your own):
 
 ## Use it on your profile
 
-The board is responsive: one PNG per screen band, swapped by a `<picture>`.
-The markup below is the sample shipped in the root README — reference the
-board **before** the text it should sit beside, and adapt the numbers to your
-own layout (the recipe underneath explains each one):
+The board is responsive: one PNG per screen band, swapped by a `<picture>`
+stack. **Your whole responsive plan lives in `config.json`** — the tiers are
+its `variants`, each designed for one canvas width (the hole beside your text
+at some window size); `target` is the desktop-ceiling board. Then:
 
-```html
-<picture>
-  <source media="(max-width: 479px)" srcset="assets/stickers-narrow.png">
-  <source media="(max-width: 639px)" srcset="assets/stickers-mid.png">
-  <source media="(max-width: 767px)" srcset="assets/stickers.png">
-  <source media="(max-width: 899px)" srcset="assets/stickers-mid.png">
-  <img src="assets/stickers.png" width="47%" align="right" alt="">
-</picture>
+```bash
+python widgets/stickers/stack.py
 ```
 
-The sample's three shapes and breakpoints follow that recipe for GitHub's
-profile layout (the text column grows faster than the board shrinks, and the
-sidebar squeezes the column in a mid window band); with different text or a
-different page, your numbers will differ. The pieces to tune:
+prints the `<picture>` markup with all viewport breakpoints derived from your
+tiers (it follows GitHub's profile column curve, including the sidebar squeeze
+band) — paste it **before** the text the board should sit beside. Sample
+tiers in this config, tuned for our text:
 
-- **The percentage `width`** sets the board's share of the column, at every
-  screen size (a fixed pixel width would crush the text on phones). Pick the
-  share you want the stickers to occupy.
-- **The display boxes** (`target` and each variant's `width`/`height`) set
-  each PNG's aspect — the height the board occupies. Aim each one at the
-  height of the text beside it: measure your text block at a couple of window
-  sizes (or just build, look and adjust), then set the frames to match —
-  wide-and-low for a roomy cell, square-ish for a squeezed one, portrait for
-  phones.
+| variant | canvas | shape |
+| --- | --- | --- |
+| `phone` | 130 | portrait pile |
+| `slim` | 145 | portrait pile |
+| `compact` | 172 | near-square |
+| `wide` | 195 | wide sheet |
+| `target` | 282 (ceiling) | wide sheet |
+
+Pick your own tier widths by where your text block's height steps (it changes
+in jumps as lines wrap/unwrap — dense tiers where it steps hard, sparse where
+it is flat; a good rule is adjacent tiers' aspect ratio within ~1.25×). The
+pieces to tune:
+
+- **`share`** — the board's share of the column at every screen size (a fixed
+  pixel width would crush the text on phones). The stack generator turns it
+  into the `width` percentage.
+- **Each variant's `width`** — the canvas it is designed for; the frame's
+  height should match your text height at that width (measure once, or build,
+  look and adjust; the motion preview in the repo wiki shows the whole axis).
 - **`max_sheet_px`** caps the saved PNG's raw pixel width. GitHub sizes its
   content-width table from an image's raw pixels, so a full 2× sheet can
   inflate the table and leave a hole beside your widest row. Keep the cap
@@ -61,7 +65,8 @@ then push — the **Build profile artwork** action regenerates the board.
 
 | Field | Meaning |
 | --- | --- |
-| `target.width` / `height` | Display box of the desktop board, in CSS px. The build pads the PNG to exactly this aspect; the README's percentage scales it. |
+| `share` | The board's share of the column at every screen size; the stack generator turns it into the README's `width` percentage. |
+| `target.width` / `height` | Display box of the desktop-ceiling board, in CSS px. The build pads the PNG to exactly this aspect; the README's percentage scales it. |
 | `max_sheet_px` | Cap on the saved PNG's raw pixel width (default 578). Keep it under your widest row's content width minus 20px, or the table may inflate; see "Use it on your profile". |
 | `stickers[].src` | Image path, relative to this folder. |
 | `stickers[].size` | On-screen width in px on the desktop board; height scales to match. Unspecified stickers fall back to `defaults.size`. |
@@ -74,7 +79,7 @@ then push — the **Build profile artwork** action regenerates the board.
 | `stickers[].alpha_threshold` | Alpha below this counts as background. Default 250 (set in `defaults`); `0` keeps every pixel as-is. |
 | `stickers[].solidify` | Fine-tune the solidify pass: `{ "min_keep": 0.04, "fill_holes": true, "close": 2 }`. |
 | `stickers[].harmonize` / `material` | `false` opts one sticker out of colour harmonisation / the enamel finish. |
-| `variants.<name>` | Extra boards for other screen shapes — e.g. a portrait pile for phones. Fields: `width` / `height` (display box), `output` (PNG file name under `assets/`), optional `layout` (a size/x/y/rotate list like the desktop placements; generated automatically when absent). |
+| `variants.<name>` | One tier per screen band — a board designed for one canvas width (the hole beside the text). Fields: `width` (the canvas it is designed for), `height` (frame height, aim at your text height there), `output` (PNG file name under `assets/`), optional `layout` (a size/x/y/rotate list; generated automatically when absent). The stack generator turns the tiers into README markup. |
 
 Shared knobs live in the top-level `defaults` object and apply to every
 sticker unless overridden per sticker — including `size` (a shared default

@@ -23,8 +23,8 @@
     <td>
       <h3>
         <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="assets/player-dark.gif?v=7379f7">
-          <img src="assets/player-light.gif?v=99e4ae" width="599" alt="">
+          <source media="(prefers-color-scheme: dark)" srcset="assets/player-dark.webp?v=7379f7">
+          <img src="assets/player-light.webp?v=99e4ae" width="599" alt="">
         </picture>
         <details>
           <summary>

@@ -125,19 +125,34 @@ def quantize_frame(frame, palette, lut):
     return q
 
 
-def encode_gif(frames, delays_cs, dest, bg_rgb):
-    frames = downscale(frames)
+def quantize_frames(frames, bg_rgb):
+    """Map every frame onto one shared per-theme palette. The 256-color step
+    is what keeps the encode small: flat text and background colors collapse
+    into long single-index runs that both the GIF encoder and VP8L love.
+    No dithering: Floyd-Steinberg error diffusion smears quantization noise
+    from the moving title band across the whole frame, which defeats the
+    per-frame delta boxes and leaves ghost rows on the accumulated canvas."""
     flattened = composite(frames, bg_rgb)
     palette, lut = build_palette(flattened, bg_rgb)
-    # No dithering: Floyd-Steinberg error diffusion smears quantization noise
-    # from the moving title band across the whole frame, which defeats the
-    # per-frame delta boxes and leaves ghost rows on the accumulated canvas.
-    quantized = [quantize_frame(f, palette, lut) for f in flattened]
-    durations = [round(cs * 10) for cs in delays_cs]   # centiseconds -> ms
-    quantized[0].save(
-        dest, save_all=True, append_images=quantized[1:],
+    return [quantize_frame(f, palette, lut) for f in flattened]
+
+
+def encode_webp(quantized, delays_cs, dest):
+    """Animated WebP, lossless, from the palette-quantized frames. Lossless
+    means the text is pixel-exact and there is no 256-color seam; VP8L's
+    entropy coding beats the GIF's LZW on the same pixels (~40% smaller).
+    kmin/kmax keep keyframes sparse so inter-frame deltas stay cheap."""
+    rgba = []
+    for q in quantized:
+        im = q.convert("RGB")                    # transparency slot is black
+        alpha = q.point(lambda i: 0 if i == TRANSPARENT_INDEX else 255, mode="L")
+        im.putalpha(alpha)
+        rgba.append(im)
+    durations = [round(cs * 10) for cs in delays_cs]
+    rgba[0].save(
+        dest, format="WEBP", save_all=True, append_images=rgba[1:],
         duration=durations, loop=0,
-        transparency=TRANSPARENT_INDEX, disposal=1,
+        lossless=True, method=6, kmin=50, kmax=100,
     )
     return dest.stat().st_size
 
@@ -164,14 +179,16 @@ def main():
         print(f"schedule: {len(frames)} frames "
               f"({sum(f['delayCs'] for f in frames) / 100:.1f}s total)")
         grabbed = grab_frames(page, frames)
+        # quantize once, encode the lossless WebP per theme
+        for theme in ("light", "dark"):
+            scaled = downscale(grabbed[theme])
+            quantized = quantize_frames(scaled, PAGE_BG[theme])
+            delays = [f["delayCs"] for f in frames]
+            size = encode_webp(quantized, delays,
+                               ROOT / "assets" / f"player-{theme}.webp")
+            print(f"wrote {theme} webp ({size / 1024:.0f} KB, "
+                  f"{len(quantized)} frames)")
         browser.close()
-
-    for theme in ("light", "dark"):
-        dest = ROOT / "assets" / f"player-{theme}.gif"
-        size = encode_gif(grabbed[theme],
-                          [f["delayCs"] for f in frames], dest, PAGE_BG[theme])
-        print(f"wrote {dest.relative_to(ROOT)} ({size / 1024:.0f} KB, "
-              f"{len(grabbed[theme])} frames)")
 
 
 if __name__ == "__main__":

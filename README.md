@@ -34,8 +34,8 @@
               <source media="(prefers-color-scheme: dark)" srcset="assets/control-left-dark.png?v=9c21d1">
               <img src="assets/control-left-light.png?v=3d9f43" width="400" alt="">
             </picture><picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=420a3a">
-              <img src="assets/control-right-light.webp?v=d46a21" width="177" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=53ab06">
+              <img src="assets/control-right-light.webp?v=aa88c9" width="177" alt="">
             </picture>
           </summary>
           <br>

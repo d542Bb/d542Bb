@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Player animation preview (GIF frame source)</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 24px; background: #161b22; color: #c9d1d9;
+    font: 13px/1.6 "Liberation Sans", Arial, sans-serif;
+  }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .sub { color: #8b949e; margin-bottom: 16px; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+    padding: 10px 12px; margin-bottom: 20px;
+  }
+  .controls button, .controls input[type="number"] {
+    background: #30363d; color: #c9d1d9; border: 1px solid #444c56;
+    border-radius: 6px; padding: 4px 10px; font: inherit;
+  }
+  .controls button { cursor: pointer; }
+  .controls input[type="range"] { flex: 1; min-width: 200px; }
+  .readout { min-width: 170px; text-align: right; font-variant-numeric: tabular-nums; }
+  .panel { margin-bottom: 24px; }
+  .panel-label { color: #8b949e; margin-bottom: 6px; }
+  .stage { display: inline-block; padding: 8px; border-radius: 8px; }
+  .stage.light { background: #ffffff; }
+  .stage.dark  { background: #0d1117; }
+  .stage canvas { display: block; }
+  .stage canvas.card { width: 599px; height: 172px; }
+  canvas.strip { width: 577px; height: 14px; margin-top: 3px; }
+  #dirty-overlay { position: relative; }
+  #dirty-overlay canvas.overlay {
+    position: absolute; left: 8px; top: 8px; width: 599px; height: 172px;
+    pointer-events: none;
+  }
+  #dirty-stats { color: #8b949e; margin-top: 8px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>播放器动画预览 — GIF 帧源</h1>
+<div class="sub">
+  由 preview.py 从 config.json 生成。Action 截帧时对每帧访问 <code>?t=秒数</code>，画面是渲染时间的纯函数；
+  脏区估计条显示了 GIF 相邻帧压缩每帧要写的最小补丁。
+</div>
+
+<div class="controls">
+  <button id="play">暂停</button>
+  <input id="seek" type="range" min="0" max="60" step="0.05" value="0">
+  <span class="readout" id="readout">00:00 / 60s</span>
+  <label>循环 <input id="loop" type="number" min="5" max="600" value="60"> s</label>
+  <label>节拍 <select id="fps">
+    <option value="12">12 Hz</option>
+    <option value="15" selected>15 Hz</option>
+    <option value="25">25 Hz</option>
+    <option value="30">30 Hz</option>
+  </select></label>
+  <button id="freeze">冻结在当前帧 (?t=)</button>
+  <button id="verify">按调度表逐帧实测</button>
+  <label><input id="sched-toggle" type="checkbox" checked> 调度可视化</label>
+</div>
+
+<div class="panel">
+  <div class="panel-label">light（README 浅色主题）</div>
+  <div class="stage light" id="dirty-overlay">
+    <canvas id="card-light" class="card" width="1198" height="344"></canvas>
+    <canvas id="overlay" class="overlay" width="599" height="172"></canvas>
+    <canvas id="strip-light" class="strip" width="1154" height="28"></canvas>
+  </div>
+  <div id="dirty-stats">调度表尚未生成…</div>
+  <div class="panel-label">红=标题带（随节拍） 蓝=进度+秒数（1 Hz） 绿=歌词窗（滑动期高频） 橙=当帧实际补丁并集</div>
+</div>
+
+<div class="panel">
+  <div class="panel-label">dark（README 深色主题）</div>
+  <div class="stage dark">
+    <canvas id="card-dark" class="card" width="1198" height="344"></canvas>
+    <canvas id="strip-dark" class="strip" width="1154" height="28"></canvas>
+  </div>
+</div>
+
+<script>
+"use strict";
+const DATA = __PREVIEW_DATA__;
+
+/* ---- geometry mirrored from build.py (CSS px; canvases are 2x) ---- */
+const CARD_W = 599, CARD_H = 172;
+const COVER_SIZE = 162, COVER_LEFT = CARD_W - 5 - COVER_SIZE, COVER_TOP = 5, COVER_R = 5;
+const TEXT_RIGHT = 385;
+const TITLE_BASELINE = 34, TITLE_SIZE = 18;
+const LYRIC_BASELINES = [62, 80, 98], LYRIC_SIZE = 13, LYRIC_ROW = 18;
+const TIME_BASELINE = 155, TIME_SIZE = 12;
+const BAR_LEFT = 41, BAR_RIGHT = 343, BAR_TOP = 150, BAR_H = 2;
+const KNOB_CELL = [0, 400, 20, 420];                    // 2x sprite coords
+const STRIP_W = 577, STRIP_H = 14, ICON_SCALE = 0.74;
+const CAPTION_CX = 496;
+const ICON_CELLS = {
+  next:   [0, 80, 30, 120],
+  like:   [0, 160, 38, 200],
+  liked:  [0, 200, 38, 240],
+  delete: [0, 240, 36, 280],
+  more:   [0, 280, 32, 320],
+};
+/* strip placement, same arithmetic as build_controls() */
+const STRIP_ICONS = [
+  { name: "next",   x: 0,   drop: 3,  right: false },
+  { name: "like",   x: 297, drop: -1, right: true  },
+  { name: "delete", x: 333, drop: -1, right: true  },
+  { name: "more",   x: 367, drop: -1, right: true  },
+];
+
+/* ---- palettes (same values as theme_palette()) ---- */
+const PALETTES = {
+  light: {
+    text: "#333333", muted: "#666666", track: "#e6e6e6", accent: "#4d4d4d",
+    lyricNext: "rgba(102,102,102,0.51)", lyricAfter: "rgba(102,102,102,0.27)",
+  },
+  dark: {
+    text: "#e6edf3", muted: "#969ea8", track: "#3e444c", accent: "#c8d0da",
+    lyricNext: "rgba(150,158,168,0.51)", lyricAfter: "rgba(150,158,168,0.27)",
+  },
+};
+const TINTS = { icons: "text", dot: "accent" };  // dark-theme tint sources
+
+const FONT = "'Liberation Sans', Arial, sans-serif";
+const MARQUEE_SPEED = 30;   // css px per second
+const MARQUEE_GAP = 60;
+const SLIDE_TIME = 0.3;     // lyric slide duration, seconds
+
+/* ---- assets ---- */
+const sprite = new Image(); sprite.src = DATA.sprite;
+const cover = new Image();  cover.src = DATA.cover;
+
+/* ---- deterministic scene state, pure function of t ---- */
+function parseClock(s) {
+  const parts = s.split(":").map(Number);
+  let v = 0; for (const p of parts) v = v * 60 + p; return v;
+}
+const DURATION = parseClock(DATA.duration);
+const ELAPSED0 = parseClock(DATA.elapsed);
+const TIMELINE = DATA.timeline;   // [{t, text}] sorted, t in seconds
+
+function activeLine(songT) {
+  let i = -1;
+  for (let k = 0; k < TIMELINE.length; k++) if (TIMELINE[k].t <= songT) i = k;
+  return i;
+}
+function easeOut(p) { return 1 - Math.pow(1 - p, 3); }
+
+/* ---- text helpers (mirror fit_text) ---- */
+function fitText(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  while (text && ctx.measureText(text + "\u2026").width > maxW) text = text.slice(0, -1);
+  return text.replace(/\s+$/, "") + "\u2026";
+}
+
+/* ---- sprite cells with optional dark tint ---- */
+const cellCache = new Map();
+function cell(name, theme) {
+  const key = name + "/" + theme;
+  if (cellCache.has(key)) return cellCache.get(key);
+  const [sx, sy, sw, sh] = ICON_CELLS[name];
+  const c = document.createElement("canvas");
+  c.width = sw; c.height = sh;
+  const g = c.getContext("2d");
+  g.drawImage(sprite, sx, sy, sw, sh, 0, 0, sw, sh);
+  if (theme === "dark" && name !== "liked") {
+    const color = PALETTES.dark[TINTS.icons];
+    g.globalCompositeOperation = "source-in";
+    g.fillStyle = color; g.fillRect(0, 0, sw, sh);
+  }
+  cellCache.set(key, c);
+  return c;
+}
+function knobDot(theme) {
+  const key = "dot/" + theme;
+  if (cellCache.has(key)) return cellCache.get(key);
+  const [sx, sy, sw, sh] = KNOB_CELL;
+  const c = document.createElement("canvas");
+  c.width = sw; c.height = sh;
+  const g = c.getContext("2d");
+  g.drawImage(sprite, sx, sy, sw, sh, 0, 0, sw, sh);
+  if (theme === "dark") {
+    g.globalCompositeOperation = "source-in";
+    g.fillStyle = PALETTES.dark[TINTS.dot]; g.fillRect(0, 0, sw, sh);
+  }
+  cellCache.set(key, c);
+  return c;
+}
+
+/* ---- card renderer: draws the exact state at time t ---- */
+function drawCard(canvas, theme, t) {
+  const p = PALETTES[theme];
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, CARD_W, CARD_H);
+  ctx.textBaseline = "alphabetic";
+
+  /* cover */
+  ctx.save();
+  roundRect(ctx, COVER_LEFT, COVER_TOP, COVER_SIZE, COVER_SIZE, COVER_R);
+  ctx.clip();
+  ctx.drawImage(cover, COVER_LEFT, COVER_TOP, COVER_SIZE, COVER_SIZE);
+  ctx.restore();
+
+  /* title: static or marquee */
+  ctx.font = TITLE_SIZE + "px " + FONT;
+  ctx.fillStyle = p.text;
+  const tw = ctx.measureText(DATA.title).width;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, TEXT_RIGHT, CARD_H); ctx.clip();
+  if (tw <= TEXT_RIGHT) {
+    ctx.fillText(DATA.title, 0, TITLE_BASELINE);
+  } else {
+    const span = tw + MARQUEE_GAP;
+    const x = -((t * MARQUEE_SPEED) % span);
+    ctx.fillText(DATA.title, x, TITLE_BASELINE);
+    ctx.fillText(DATA.title, x + span, TITLE_BASELINE);
+  }
+  ctx.restore();
+
+  /* lyrics window with slide */
+  const songT = Math.min(ELAPSED0 + t, DURATION);
+  const idx = activeLine(songT);
+  ctx.font = LYRIC_SIZE + "px " + FONT;
+  ctx.save();
+  /* window bottom sits just above where a settled 4th line's capitals would
+     start (13px type: cap top ≈ baseline − 9.4), so the sliding neighbour
+     rows only show while a slide is actually running */
+  ctx.beginPath(); ctx.rect(0, LYRIC_BASELINES[0] - LYRIC_SIZE - 4, TEXT_RIGHT, LYRIC_ROW * 3 - 1); ctx.clip();
+  if (idx < 0) {
+    TIMELINE.slice(0, 3).forEach((line, j) => {
+      ctx.fillStyle = j === 0 ? p.lyricNext : p.lyricAfter;
+      ctx.fillText(fitText(ctx, line.text, TEXT_RIGHT), 0, LYRIC_BASELINES[j]);
+    });
+  } else {
+    const since = songT - TIMELINE[idx].t;
+    const ease = easeOut(Math.min(since / SLIDE_TIME, 1));
+    for (let li = idx - 1; li <= idx + 3; li++) {
+      if (li < 0 || li >= TIMELINE.length) continue;
+      if (ease >= 1 && (li === idx - 1 || li === idx + 3)) continue;   // settled: exactly three lines
+      const y = LYRIC_BASELINES[0] + (li - idx) * LYRIC_ROW + (1 - ease) * LYRIC_ROW;
+      ctx.fillStyle = li === idx ? p.text : (li === idx + 1 ? p.lyricNext : p.lyricAfter);
+      ctx.fillText(fitText(ctx, TIMELINE[li].text, TEXT_RIGHT), 0, y);
+    }
+  }
+  ctx.restore();
+
+  /* times — progress state is quantized to 1 Hz so it only changes on the
+     second-boundary frames the scheduler emits (matches the GIF exactly) */
+  const progSec = Math.min(Math.floor(songT), DURATION);
+  ctx.font = TIME_SIZE + "px " + FONT;
+  ctx.fillStyle = p.muted;
+  ctx.fillText(fmtTime(progSec), 0, TIME_BASELINE);
+  ctx.textAlign = "right";
+  ctx.fillText(DATA.duration, TEXT_RIGHT, TIME_BASELINE);
+  ctx.textAlign = "left";
+
+  /* progress bar */
+  const progress = DURATION ? progSec / DURATION : 0;
+  const knobX = BAR_LEFT + (BAR_RIGHT - BAR_LEFT) * progress;
+  roundRect(ctx, BAR_LEFT, BAR_TOP, BAR_RIGHT - BAR_LEFT, BAR_H, 1);
+  ctx.fillStyle = p.track; ctx.fill();
+  if (knobX > BAR_LEFT) {
+    roundRect(ctx, BAR_LEFT, BAR_TOP, knobX - BAR_LEFT, BAR_H, 1);
+    ctx.fillStyle = p.accent; ctx.fill();
+  }
+  ctx.drawImage(knobDot(theme), knobX - 10, BAR_TOP - 3, 10, 10);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function fmtTime(s) {
+  s = Math.max(0, Math.round(s));
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+
+/* ---- control strip: static, same arithmetic as build_controls() ---- */
+function drawStrip(canvas, theme) {
+  const p = PALETTES[theme];
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, STRIP_W, STRIP_H);
+
+  for (const spec of STRIP_ICONS) {
+    const name = spec.name === "like" && DATA.liked ? "liked" : spec.name;
+    const [sx, sy, sw, sh] = ICON_CELLS[name];
+    const w = sw * ICON_SCALE / 2, h = sh * ICON_SCALE / 2;
+    let x = spec.x;
+    if (spec.right) x -= sw * ICON_SCALE / 2;
+    const y = (STRIP_H * 2 - Math.round(38 * ICON_SCALE) + spec.drop) / 2;
+    ctx.drawImage(cell(name, theme), x, y, w, h);
+  }
+
+  /* volume slider */
+  const vLeft = 33, vRight = 83, vTop = (6 * 2 + 3) / 2;
+  roundRect(ctx, vLeft, vTop, vRight - vLeft, 1, 1);
+  ctx.fillStyle = p.track; ctx.fill();
+  roundRect(ctx, vLeft, vTop, (vRight - vLeft) * 0.5, 1, 1);
+  ctx.fillStyle = p.accent; ctx.fill();
+  const dotW = 20 * ICON_SCALE / 2;
+  ctx.drawImage(knobDot(theme), (33 * 2 + (83 - 33) * 0.5 * 2) / 2 - Math.floor(dotW) / 2 + 0.5,
+                (6 * 2 + 3) / 2 - dotW / 2 + 0.5, dotW, dotW);
+
+  /* artist caption under the cover */
+  ctx.font = "11px " + FONT;
+  ctx.fillStyle = p.muted;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(fitText(ctx, DATA.artist, 170), CAPTION_CX, 12);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+/* ---- per-element frame scheduler: the encoding plan the GIF will follow ----
+   Three independent strategies share one frame sequence:
+   - title: dirty on every base tick while the marquee runs
+   - progress: knob (old + new position!) and clock text at 1 Hz
+   - lyrics: window only during the 0.3 s slide after each line change */
+const EL_TITLE = { x: 0, y: 14, w: TEXT_RIGHT, h: 26 };
+const EL_LYRICS = { x: 0, y: 45, w: TEXT_RIGHT, h: 61 };
+const ELAPSED_W = 64;
+
+const diffCanvas = document.createElement("canvas");
+diffCanvas.width = CARD_W; diffCanvas.height = CARD_H;
+const diffCtx = diffCanvas.getContext("2d", { willReadFrequently: true });
+
+function knobXAt(t) {
+  const songT = Math.min(ELAPSED0 + t, DURATION);
+  return BAR_LEFT + (BAR_RIGHT - BAR_LEFT) * (DURATION ? songT / DURATION : 0);
+}
+
+function titleOverflows() {
+  const g = document.createElement("canvas").getContext("2d");
+  g.font = TITLE_SIZE + "px " + FONT;
+  return g.measureText(DATA.title).width > TEXT_RIGHT;
+}
+
+function unionRects(rects) {
+  const x0 = Math.min(...rects.map(r => r.x));
+  const y0 = Math.min(...rects.map(r => r.y));
+  const x1 = Math.max(...rects.map(r => r.x + r.w));
+  const y1 = Math.max(...rects.map(r => r.y + r.h));
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+function buildSchedule(loop, fps) {
+  const marquee = titleOverflows();
+  const slides = TIMELINE.map(l => l.t - ELAPSED0).filter(t => t >= 0 && t < loop);
+  const tickCs = Math.max(2, Math.round(100 / fps));
+  const totalCs = Math.round(loop * 100);
+  const frames = [];
+  let prevKnob = null, prevSec = null;
+  for (let cs = 0; cs < totalCs; cs += tickCs) {
+    const t = cs / 100;
+    const parts = [];
+    let title = false, prog = false, lyric = false;
+    if (marquee) { parts.push(EL_TITLE); title = true; }
+    const sec = Math.floor(ELAPSED0 + t);
+    if (sec !== prevSec && ELAPSED0 + t < DURATION) {
+      const kx = knobXAt(t), px = prevKnob === null ? kx : prevKnob;
+      parts.push({
+        x: 0, y: 144,
+        w: Math.max(Math.max(px, kx) + 12, ELAPSED_W), h: 16,
+      });
+      prog = true; prevKnob = kx; prevSec = sec;
+    }
+    for (const s of slides) {
+      if (t >= s && t <= s + SLIDE_TIME) { parts.push(EL_LYRICS); lyric = true; break; }
+    }
+    if (!parts.length) continue;               // nothing changed: no frame gets written
+    frames.push({
+      t, title, prog, lyric,
+      progRect: prog ? parts[parts.length - 1] : null,
+      union: cs === 0 ? { x: 0, y: 0, w: CARD_W, h: CARD_H } : unionRects(parts),
+    });
+  }
+  for (let i = 0; i < frames.length; i++) {    // per-frame delay in centiseconds
+    const next = i + 1 < frames.length ? frames[i + 1].t : loop;
+    frames[i].delayCs = Math.max(2, Math.round((next - frames[i].t) * 100));
+  }
+  return { frames, marquee, fps };
+}
+
+let schedule = null;
+function rebuildSchedule() {
+  schedule = buildSchedule(state.loop, parseInt(document.getElementById("fps").value, 10));
+  const n = schedule.frames.length;
+  const avg = n ? state.loop / n : 0;
+  document.getElementById("dirty-stats").textContent =
+    "调度表：" + n + " 帧 / " + state.loop + "s 圈（平均 " + avg.toFixed(2) + " s/帧）" +
+    (schedule.marquee ? "，标题带随节拍滚动" : "，标题静止（无节拍帧）");
+}
+function frameAt(t) {
+  const f = schedule.frames;
+  let lo = 0, hi = f.length - 1, i = 0;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (f[m].t <= t) { i = m; lo = m + 1; } else hi = m - 1; }
+  return f[i];
+}
+
+const OVERLAY_COLORS = { title: "rgba(255,86,86,0.9)", prog: "rgba(86,156,255,0.9)", lyric: "rgba(63,191,111,0.9)", union: "rgba(255,193,7,0.95)" };
+function drawOverlay(f) {
+  overlayCtx.clearRect(0, 0, CARD_W, CARD_H);
+  if (!f) return;
+  overlayCtx.lineWidth = 1;
+  const box = (r, c) => { overlayCtx.strokeStyle = c; overlayCtx.strokeRect(r.x + 0.5, r.y + 0.5, r.w, r.h); };
+  if (f.title) box(EL_TITLE, OVERLAY_COLORS.title);
+  if (f.prog) box(f.progRect, OVERLAY_COLORS.prog);
+  if (f.lyric) box(EL_LYRICS, OVERLAY_COLORS.lyric);
+  if (f.union.w < CARD_W || f.union.h < CARD_H) box(f.union, OVERLAY_COLORS.union);
+}
+
+/* measured pass: draw every scheduled frame, pixel-diff against the previous
+   one, and check the real dirty bbox stays inside the analytic patch */
+const verifyState = { i: 0, prev: null, total: 0, over: [], worst: 0 };
+function verifyStep(count) {
+  const frames = schedule.frames;
+  const end = Math.min(frames.length, verifyState.i + count);
+  for (; verifyState.i < end; verifyState.i++) {
+    const f = frames[verifyState.i];
+    drawCard(cardLight, "light", f.t);
+    diffCtx.clearRect(0, 0, CARD_W, CARD_H);
+    diffCtx.drawImage(cardLight, 0, 0, CARD_W, CARD_H);
+    const cur = diffCtx.getImageData(0, 0, CARD_W, CARD_H).data;
+    if (verifyState.prev) {
+      let minX = CARD_W, minY = CARD_H, maxX = -1, maxY = -1, changed = 0;
+      for (let y = 0; y < CARD_H; y++) {
+        const row = y * CARD_W * 4;
+        for (let x = 0; x < CARD_W; x++) {
+          const i = row + x * 4;
+          if (Math.abs(cur[i] - verifyState.prev[i]) > 6 || Math.abs(cur[i+1] - verifyState.prev[i+1]) > 6 ||
+              Math.abs(cur[i+2] - verifyState.prev[i+2]) > 6 || Math.abs(cur[i+3] - verifyState.prev[i+3]) > 6) {
+            changed++;
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+      }
+      verifyState.total += changed * 0.18 + 20;
+      const u = f.union, slack = 2;
+      const inside = maxX < 0 || (minX >= u.x - slack && minY >= u.y - slack &&
+                                  maxX <= u.x + u.w + slack && maxY <= u.y + u.h + slack);
+      if (!inside) {
+        verifyState.over.push(verifyState.i);
+        const bleed = Math.max(minX - (u.x + u.w), u.x - minX, minY - (u.y + u.h), u.y - minY, 0);
+        verifyState.worst = Math.max(verifyState.worst, bleed);
+      }
+    } else {
+      verifyState.total += CARD_W * CARD_H * 0.1;
+    }
+    verifyState.prev = new Uint8ClampedArray(cur);
+  }
+  return verifyState.i >= frames.length;
+}
+function verifyReport() {
+  drawCard(cardLight, "light", state.t);       // restore the live frame
+  const n = schedule.frames.length;
+  document.getElementById("dirty-stats").textContent =
+    "实测校验：" + n + " 帧全部绘制完毕，估算体积 \u2248 " + (verifyState.total / 1024).toFixed(0) +
+    " KB / " + state.loop + "s 圈" +
+    (verifyState.over.length
+      ? "；" + verifyState.over.length + " 帧实际改动超出解析补丁（最大外溢 " + verifyState.worst + " px，帧号 " + verifyState.over.slice(0, 5).join(",") + "）"
+      : "；实际改动全部落在解析补丁内 \u2713");
+}
+
+/* ---- playback loop ---- */
+const state = { t: 0, loop: DATA.loop, playing: true, sched: true };
+const params = new URLSearchParams(location.search);
+if (params.has("t")) { state.t = parseFloat(params.get("t")) || 0; state.playing = false; }
+if (params.has("loop")) { state.loop = parseFloat(params.get("loop")) || DATA.loop; }
+
+const cardLight = document.getElementById("card-light");
+const cardDark = document.getElementById("card-dark");
+const overlayCtx = document.getElementById("overlay").getContext("2d");
+const seek = document.getElementById("seek");
+seek.max = state.loop; seek.value = state.t;
+document.getElementById("loop").value = state.loop;
+
+function render() {
+  drawCard(cardLight, "light", state.t);
+  drawCard(cardDark, "dark", state.t);
+  if (state.sched) drawOverlay(frameAt(state.t));
+  else overlayCtx.clearRect(0, 0, CARD_W, CARD_H);
+  const m = fmtTime(state.t);
+  document.getElementById("readout").textContent =
+    m + " / " + state.loop + "s" + (params.has("t") ? "（冻结）" : "");
+  seek.value = state.t;
+}
+
+document.getElementById("play").addEventListener("click", (e) => {
+  state.playing = !state.playing;
+  e.target.textContent = state.playing ? "暂停" : "播放";
+});
+seek.addEventListener("input", () => { state.t = parseFloat(seek.value); render(); });
+document.getElementById("loop").addEventListener("change", (e) => {
+  state.loop = Math.max(5, parseFloat(e.target.value) || 60);
+  seek.max = state.loop;
+  rebuildSchedule();
+});
+document.getElementById("fps").addEventListener("change", rebuildSchedule);
+document.getElementById("verify").addEventListener("click", () => {
+  verifyState.i = 0; verifyState.prev = null; verifyState.total = 0;
+  verifyState.over = []; verifyState.worst = 0;
+  document.getElementById("dirty-stats").textContent = "实测校验中…";
+  const run = () => {
+    const done = verifyStep(40);
+    if (!done) setTimeout(run, 0);
+    else verifyReport();
+  };
+  run();
+});
+document.getElementById("sched-toggle").addEventListener("change", (e) => {
+  state.sched = e.target.checked; render();
+});
+
+let last = performance.now();
+function tick(now) {
+  if (state.playing) {
+    state.t += (now - last) / 1000;
+    if (state.t >= state.loop) state.t -= state.loop;
+    render();
+  }
+  last = now;
+  requestAnimationFrame(tick);
+}
+
+function start() {
+  drawStrip(document.getElementById("strip-light"), "light");
+  drawStrip(document.getElementById("strip-dark"), "dark");
+  rebuildSchedule();
+  render();
+  window.__previewReady = true;   // headless capturers wait for this flag
+  requestAnimationFrame(tick);
+}
+if (sprite.complete && cover.complete) start();
+else {
+  let pending = 2;
+  const one = () => { if (--pending === 0) start(); };
+  sprite.onload = one; cover.onload = one;
+}
+</script>
+</body>
+</html>

@@ -6,6 +6,11 @@
     "I will die before I walk away",
     "Yeah you know"
   ],
+  "lyrics_timeline": [
+    { "t": "01:32", "text": "Like a flower in a hurricane" },
+    { "t": "01:37", "text": "I will die before I walk away" },
+    { "t": "01:42", "text": "Yeah you know" }
+  ],
   "elapsed": "01:32",
   "duration": "03:44",
   "liked": true,

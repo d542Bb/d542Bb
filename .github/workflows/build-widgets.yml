@@ -7,6 +7,16 @@ on:
       - widgets/**
       - .github/workflows/build-widgets.yml
   workflow_dispatch:
+    inputs:
+      song_url:
+        description: "Song URL (QQ Music / NetEase) to fetch before rendering"
+        required: false
+      start:
+        description: "Loop open time m:ss (default: first lyric line)"
+        required: false
+      end:
+        description: "Loop close time m:ss (default: start + 60s)"
+        required: false
 
 permissions:
   contents: write
@@ -25,10 +35,32 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Pillow
-        run: pip install Pillow
+      - name: Install Pillow, Playwright and gifsicle
+        run: |
+          pip install Pillow playwright
+          sudo apt-get update
+          sudo apt-get install -y gifsicle fonts-liberation
+          playwright install chromium --with-deps
 
-      - name: Regenerate artwork
+      - name: Fetch song metadata (manual runs with a URL)
+        if: ${{ inputs.song_url }}
+        run: |
+          args=("${{ inputs.song_url }}")
+          [ -n "${{ inputs.start }}" ] && args+=(--start "${{ inputs.start }}")
+          [ -n "${{ inputs.end }}" ] && args+=(--end "${{ inputs.end }}")
+          python widgets/player/fetch_song.py "${args[@]}"
+
+      - name: Render player GIFs
+        run: python widgets/player/render_gif.py
+
+      - name: Optimize GIFs
+        run: |
+          for f in assets/player-*.gif; do
+            gifsicle -O3 --lossy=80 -o "$f.opt" "$f" && mv "$f.opt" "$f"
+          done
+          ls -la assets/*.gif
+
+      - name: Regenerate static artwork
         run: python widgets/build_all.py
 
       - name: Commit if changed

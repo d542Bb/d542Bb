@@ -30,9 +30,11 @@ Push and the **Build profile artwork** workflow regenerates the PNGs in
 | `title` | Song title; truncated with an ellipsis if too wide. |
 | `artist` | Caption centred under the cover. |
 | `lyrics` | Up to three lines: current, then two fading lines. |
+| `lyrics_timeline` | Optional. `[{ "t": "m:ss", "text": ... }]` start times per line; drives the animated preview's highlight and slide. Falls back to spreading `lyrics` evenly from `elapsed` to the end. |
 | `elapsed` / `duration` | `m:ss` times; the progress bar fills to `elapsed / duration`. |
 | `liked` | `true` shows a filled red heart, `false` an outline. |
 | `cover` | Path to the album art, relative to this folder. |
+| `loop_seconds` | Optional. Length of the animated preview loop (default 60). |
 
 ## Build locally
 
@@ -43,6 +45,44 @@ python widgets/player/build.py
 
 Outputs `assets/player-{light,dark}.png` and `assets/control-bar-{light,dark}.png`.
 The build is deterministic: the same config and inputs produce identical files.
+
+## Fetch from a streaming platform
+
+`fetch_song.py` rewrites the config from a song URL — no login needed:
+
+```bash
+python widgets/player/fetch_song.py https://y.qq.com/n/ryqq_v2/songDetail/<mid>
+python widgets/player/fetch_song.py https://music.163.com/song?id=<id>
+```
+
+It pulls title / artist / duration, the line-level LRC timeline (credits and
+title-banner lines filtered out) and the 500x500 album art, then writes
+`config.json` + `cover.jpg` (override with `--config` / `--cover`). The
+workflow can call this before building to turn "paste a link" into a full
+automated render.
+
+## Animated preview (GIF frame source)
+
+`preview.py` generates `preview.html` (gitignored) from the template, config,
+cover and icon sheet — everything inlined, so the file opens directly in a
+browser. The page draws the card on canvases with the exact geometry of
+`build.py`, and the scene is a pure function of the render time:
+
+- Live mode plays the loop for eyeballing; controls: play/pause, seek,
+  loop length, light and dark side by side.
+- `?t=<seconds>` freezes the exact frame at that time — this is what the GIF
+  pipeline screenshots frame by frame (headless Chromium in the workflow).
+  Capturers wait for `window.__previewReady`.
+- The overlay visualizes the per-element frame schedule the GIF encoder will
+  follow: title band on every base tick (red), progress + clock at 1 Hz (blue,
+  state quantized to whole seconds), lyrics only during the 0.3 s slide after
+  a line change (green); amber is the actual per-frame patch (the union).
+  “按调度表逐帧实测” draws every scheduled frame and pixel-diffs it against
+  the previous one, verifying the real changes stay inside the analytic patch.
+
+Note for CI: headless Chromium throttles `requestAnimationFrame` in unseen
+windows, so always capture via `?t=` frames, never by letting live mode run.
+Install `fonts-liberation` on the runner so text metrics match.
 
 ## How it works
 

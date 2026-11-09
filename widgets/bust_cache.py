@@ -27,7 +27,9 @@ def pixel_hash(path):
 
 
 def main():
-    hashes = {p.name: pixel_hash(p) for p in (ROOT / "assets").glob("*.png")}
+    assets = list((ROOT / "assets").glob("*.png")) + \
+        list((ROOT / "assets").glob("*.gif"))
+    hashes = {p.name: pixel_hash(p) for p in assets}
     names = "|".join(sorted((re.escape(n) for n in hashes), key=len, reverse=True))
     pattern = re.compile(rf"({names})(\?v=[0-9a-f]+)?")
 

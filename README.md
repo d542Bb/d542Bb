@@ -23,14 +23,14 @@
     <td>
       <h3>
         <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="assets/player-dark.webp?v=3456b3">
-          <img src="assets/player-light.webp?v=5b0730" width="599" alt="">
+          <source media="(prefers-color-scheme: dark)" srcset="assets/player-dark.webp?v=88647e">
+          <img src="assets/player-light.webp?v=de2303" width="599" alt="">
         </picture>
         <details>
           <summary>
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-dark.webp?v=b83249">
-              <img src="assets/control-light.webp?v=f58789" width="577" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-dark.webp?v=021cca">
+              <img src="assets/control-light.webp?v=56ce35" width="577" alt="">
             </picture>
           </summary>
           <br>

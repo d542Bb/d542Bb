@@ -61,18 +61,18 @@ title-banner lines filtered out) and the 500x500 album art, then writes
 workflow can call this before building to turn "paste a link" into a full
 automated render.
 
-## Animated preview (GIF frame source)
+## Animated card (frame source for the WebP build)
 
 `preview.py` generates `preview.html` (gitignored) from the template, config,
 cover and icon sheet — everything inlined, so the file opens directly in a
 browser. The page draws the card on canvases with the exact geometry of
-`build.py`, and the scene is a pure function of the render time:
+`build.py`, and the scene is a pure function of the render time.
 
 - Live mode plays the loop for eyeballing; controls: play/pause, seek,
   loop length, light and dark side by side.
-- `?t=<seconds>` freezes the exact frame at that time — this is what the GIF
-  pipeline screenshots frame by frame (headless Chromium in the workflow).
-  Capturers wait for `window.__previewReady`.
+- `?t=<seconds>` freezes the exact frame at that time — this is what the
+  animation pipeline screenshots frame by frame (headless Chromium in the
+  workflow). Capturers wait for `window.__previewReady`.
 - The overlay visualizes the per-element frame schedule the GIF encoder will
   follow: title band on every base tick (red), progress + clock at 1 Hz (blue,
   state quantized to whole seconds), lyrics only during the 0.3 s slide after

@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -202,7 +203,7 @@ def main():
         "loop_seconds": int(round(end - start)),
         "duration": fmt_clock(info["duration_s"]),
         "liked": old.get("liked", True),
-        "cover": str(cover_path),
+        "cover": os.path.relpath(cover_path, config_path.parent).replace("\\\\", "/"),
     }
     config_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")

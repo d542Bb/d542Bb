@@ -93,15 +93,15 @@ const TITLE_BASELINE = 34, TITLE_SIZE = 18;
 const LYRIC_BASELINES = [62, 80, 98], LYRIC_SIZE = 13, LYRIC_ROW = 18;
 const TIME_BASELINE = 155, TIME_SIZE = 12;
 const BAR_LEFT = 41, BAR_RIGHT = 343, BAR_TOP = 150, BAR_H = 2;
-const KNOB_CELL = [0, 400, 20, 420];                    // 2x sprite coords
+const KNOB_CELL = [0, 400, 20, 20];
 const STRIP_W = 577, STRIP_H = 14, ICON_SCALE = 0.74;
 const CAPTION_CX = 496;
-const ICON_CELLS = {
-  next:   [0, 80, 30, 120],
-  like:   [0, 160, 38, 200],
-  liked:  [0, 200, 38, 240],
-  delete: [0, 240, 36, 280],
-  more:   [0, 280, 32, 320],
+const ICON_CELLS = {                        // [x, y, w, h] in 2x sprite coords
+  next:   [0, 80, 30, 40],
+  like:   [0, 160, 38, 40],
+  liked:  [0, 200, 38, 40],
+  delete: [0, 240, 36, 40],
+  more:   [0, 280, 32, 40],
 };
 /* strip placement, same arithmetic as build_controls() */
 const STRIP_ICONS = [
@@ -125,6 +125,7 @@ const PALETTES = {
 const TINTS = { icons: "text", dot: "accent" };  // dark-theme tint sources
 
 const FONT = "'Liberation Sans', Arial, sans-serif";
+const BASE_FPS = 25;        // scheduler tick the GIF follows (4 cs per frame)
 const MARQUEE_SPEED = 30;   // css px per second
 const MARQUEE_GAP = 60;
 const SLIDE_TIME = 0.3;     // lyric slide duration, seconds

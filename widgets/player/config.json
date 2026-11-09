@@ -1,18 +1,137 @@
 {
   "title": "Flower In A Hurricane (feat. Tame Impala, SZA, King Gizzard & the Lizard Wizard)",
-  "artist": "Justice · Tame Impala · SZA",
+  "artist": "Justice · Tame Impala · SZA · Grand Theft Auto VI",
   "lyrics": [
-    "Like a flower in a hurricane",
-    "I will die before I walk away",
-    "Yeah you know"
+    "Only love never hesitates",
+    "Only trust has a price to pay",
+    "Like a flower in a hurricane"
   ],
   "lyrics_timeline": [
-    { "t": "01:32", "text": "Like a flower in a hurricane" },
-    { "t": "01:37", "text": "I will die before I walk away" },
-    { "t": "01:42", "text": "Yeah you know" }
+    {
+      "t": "1:05",
+      "text": "Only love never hesitates"
+    },
+    {
+      "t": "1:09",
+      "text": "Only trust has a price to pay"
+    },
+    {
+      "t": "1:13",
+      "text": "Like a flower in a hurricane"
+    },
+    {
+      "t": "1:16",
+      "text": "We see the sun rise into another day"
+    },
+    {
+      "t": "1:21",
+      "text": "Only love never hesitates"
+    },
+    {
+      "t": "1:24",
+      "text": "Only trust has a price to pay"
+    },
+    {
+      "t": "1:28",
+      "text": "Like a flower in a hurricane"
+    },
+    {
+      "t": "1:31",
+      "text": "I will die before I walk away walk away"
+    },
+    {
+      "t": "1:36",
+      "text": "All the crashes"
+    },
+    {
+      "t": "1:39",
+      "text": "Floods and flashes"
+    },
+    {
+      "t": "1:42",
+      "text": "And my heart is aching"
+    },
+    {
+      "t": "1:46",
+      "text": "Till I'm washed away once more"
+    },
+    {
+      "t": "2:06",
+      "text": "Let's take it fast just like the Flash"
+    },
+    {
+      "t": "2:09",
+      "text": "And in a moment we'll be gone like a second chance"
+    },
+    {
+      "t": "2:13",
+      "text": "You and me we gon' let this life go rushing past"
+    },
+    {
+      "t": "2:18",
+      "text": "I'll leave it till the very last"
+    },
+    {
+      "t": "2:20",
+      "text": "Yeah"
+    },
+    {
+      "t": "2:29",
+      "text": "Only love never hesitates"
+    },
+    {
+      "t": "2:33",
+      "text": "Only trust has a price to pay"
+    },
+    {
+      "t": "2:37",
+      "text": "Like a flower in a hurricane"
+    },
+    {
+      "t": "2:40",
+      "text": "We see the sun rise into another day"
+    },
+    {
+      "t": "2:44",
+      "text": "Only love never hesitates"
+    },
+    {
+      "t": "2:48",
+      "text": "Only trust has a price to pay"
+    },
+    {
+      "t": "2:52",
+      "text": "Like a flower in a hurricane"
+    },
+    {
+      "t": "2:55",
+      "text": "I will die before I walk away walk away"
+    },
+    {
+      "t": "2:59",
+      "text": "Yeah you know"
+    },
+    {
+      "t": "3:01",
+      "text": "You know I think about it now and then"
+    },
+    {
+      "t": "3:04",
+      "text": "Is it a matter of not if but when?"
+    },
+    {
+      "t": "3:08",
+      "text": "Something beautiful comin' to an end"
+    },
+    {
+      "t": "3:12",
+      "text": "And it created our death day"
+    }
   ],
-  "elapsed": "01:32",
-  "duration": "03:44",
+  "elapsed": "1:04",
+  "loop_end": "2:04",
+  "loop_seconds": 60,
+  "duration": "3:44",
   "liked": true,
   "cover": "cover.jpg"
 }

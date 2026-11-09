@@ -4,12 +4,14 @@ Pipeline: rebuild preview.html from the config, open it in headless
 Chromium, walk the per-frame schedule the page computed, pull frames off
 the canvases, and encode:
 
-  player-left-{theme}.webp    animated card half (title/lyrics/progress)
-  player-cover.png            static transparent album-art half
-  control-left-{theme}.png    static transport + volume strip
-  control-right-{theme}.webp  artist caption — a slow marquee anchored to
-                              the album-art axis when the name is long,
-                              a single static frame when it is short
+  player-{theme}.webp   the full 599px card (title/lyrics/progress/cover)
+  control-{theme}.webp  the full 577px transport strip + artist caption
+
+Each row is a single animated image so the README scales it as a whole
+(two adjacent images wrap at narrow widths). Static regions — the cover
+art, the transport icons — are identical across frames, so the delta
+frames never rewrite them; they appear once, in the first keyframe (the
+encoder runs with keyframe insertion disabled, which lossless allows).
 
 Frames are captured at 2x from the canvases, downscaled to OUTPUT_SCALE
 (1.5 = the README's display size plus half), collapsed onto a shared
@@ -34,8 +36,6 @@ from PIL import Image, ImageChops
 
 WIDGET = Path(__file__).resolve().parent
 ROOT = WIDGET.parents[1]
-LEFT_W = 400                     # animated card half, css px; card is 599
-STRIP_SPLIT = 400                # animated caption half, css px; strip is 577
 CAPTURE_CHUNK = 20               # frames per evaluate round-trip
 FPS_OPTION = "25"                # matches BASE_FPS in the preview template
 OUTPUT_SCALE = 1.5               # render density over the css display size
@@ -53,11 +53,12 @@ def launch_chromium(pw):
 
 
 def grab_frames(page, frames):
-    """Pull every scheduled frame off the four animated canvases as PIL
-    images, plus one static grab of the transport-strip left blocks."""
+    """Pull every scheduled frame off the card and strip canvases as PIL
+    images. Static regions are identical in every frame; dedupe() and the
+    delta encoding take care of the rest."""
     started = time.time()
-    streams = {"cardL": [], "cardD": [], "stripRL": [], "stripRD": []}
-    keys = ("cardL", "cardD", "stripRL", "stripRD")
+    streams = {"cardL": [], "cardD": [], "stripL": [], "stripD": []}
+    keys = ("cardL", "cardD", "stripL", "stripD")
     for i in range(0, len(frames), CAPTURE_CHUNK):
         chunk = frames[i:i + CAPTURE_CHUNK]
         data = page.evaluate(
@@ -65,8 +66,8 @@ def grab_frames(page, frames):
                  state.t = t;
                  render();
                  return [cardLight, cardDark,
-                         document.getElementById('stripr-light'),
-                         document.getElementById('stripr-dark')].map(
+                         document.getElementById('strip-light'),
+                         document.getElementById('strip-dark')].map(
                    c => c.toDataURL('image/png'));
                })""",
             [f["t"] for f in chunk],
@@ -77,15 +78,6 @@ def grab_frames(page, frames):
                 streams[key].append(Image.open(io.BytesIO(raw)).convert("RGBA"))
         print(f"  captured {min(i + CAPTURE_CHUNK, len(frames))}/{len(frames)} "
               f"frames ({time.time() - started:.0f}s)")
-    # transport strip left blocks: static, one grab each
-    streams["stripLL"] = [
-        Image.open(io.BytesIO(base64.b64decode(
-            u.split(",", 1)[1]))).convert("RGBA")
-        for u in page.evaluate(
-            """() => [document.getElementById('strip-light'),
-                      document.getElementById('strip-dark')].map(
-                c => c.toDataURL('image/png'))""")
-    ]
     return streams
 
 
@@ -161,7 +153,7 @@ def encode_webp(frames, durations_ms, dest):
     frames[0].save(
         dest, format="WEBP", save_all=True, append_images=frames[1:],
         duration=durations, loop=0,
-        lossless=True, method=6, kmin=50, kmax=100,
+        lossless=True, method=6, kmin=0, kmax=0,
     )
     return dest.stat().st_size
 
@@ -195,46 +187,25 @@ def main():
     assets = ROOT / "assets"
     workdir = Path(tempfile.mkdtemp(prefix="player-frames-"))
     try:
-        # the card canvases are full-width (2x of 599 css); crop the animated
-        # left half (800 of 1198) before downscaling
-        card_l = downscale([f.crop((0, 0, 800, f.height)) for f in streams["cardL"]])
-        card_d = downscale([f.crop((0, 0, 800, f.height)) for f in streams["cardD"]])
-        strip_rl = downscale(streams["stripRL"])
-        strip_rd = downscale(streams["stripRD"])
-        strip_ll = downscale(streams["stripLL"])
-        split_x = round(LEFT_W * OUTPUT_SCALE)          # 600 at 1.5x
-
-        # static cover half (identical in both themes): the right slice of
-        # the full card (2x 800..1198 = css 400..599)
-        cover_full = streams["cardL"][0].crop(
-            (800, 0, streams["cardL"][0].width, streams["cardL"][0].height))
-        cover = cover_full.resize(
-            (round(cover_full.width * OUTPUT_SCALE / 2),
-             round(cover_full.height * OUTPUT_SCALE / 2)), Image.LANCZOS)
-        cover_path = assets / "player-cover.png"
-        cover.save(cover_path, optimize=True)
-        print(f"wrote player-cover.png ({cover_path.stat().st_size / 1024:.0f} KB)")
+        card_l = downscale(streams["cardL"])
+        card_d = downscale(streams["cardD"])
+        strip_l = downscale(streams["stripL"])
+        strip_d = downscale(streams["stripD"])
 
         for theme, card in (("light", card_l), ("dark", card_d)):
-            dest = assets / f"player-left-{theme}.webp"
+            dest = assets / f"player-{theme}.webp"
             palette, lut = build_palette(card)
             quantized = [quantize_frame(f, palette, lut) for f in card]
             size = encode_webp(quantized, durations_ms, dest)
             print(f"wrote {dest.name} ({size / 1024:.0f} KB, {len(quantized)} frames)")
 
-        for theme, strip_frames, strip_left in (
-                ("light", strip_rl, strip_ll[0]), ("dark", strip_rd, strip_ll[1])):
-            # transport strip left block canvas: transport + volume (static);
-            # right block canvas: artist caption (animated only when long)
-            strip_left.save(assets / f"control-left-{theme}.png", optimize=True)
-            frames_r, durs_r = dedupe(strip_frames, durations_ms)
-            scrolling = len(frames_r) > 1
-            dest = assets / f"control-right-{theme}.webp"
-            palette, lut = build_palette(frames_r)
-            quantized = [quantize_frame(f, palette, lut) for f in frames_r]
-            size = encode_webp(quantized, durs_r, dest)
-            mode = "marquee" if scrolling else "static"
-            print(f"wrote {dest.name} ({size / 1024:.0f} KB, {len(quantized)} frames, {mode})")
+        for theme, strip_frames in (("light", strip_l), ("dark", strip_d)):
+            frames_s, durs_s = dedupe(strip_frames, durations_ms)
+            dest = assets / f"control-{theme}.webp"
+            palette, lut = build_palette(frames_s)
+            quantized = [quantize_frame(f, palette, lut) for f in frames_s]
+            size = encode_webp(quantized, durs_s, dest)
+            print(f"wrote {dest.name} ({size / 1024:.0f} KB, {len(quantized)} frames)")
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 

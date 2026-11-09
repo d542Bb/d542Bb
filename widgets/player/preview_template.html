@@ -30,8 +30,7 @@
   .stage.dark  { background: #0d1117; }
   .stage canvas { display: block; }
   .stage canvas.card { width: 599px; height: 172px; }
-  canvas.strip { width: 400px; height: 14px; margin-top: 3px; }
-  canvas.strip-r { width: 177px; height: 14px; margin-top: 3px; }
+  canvas.strip { width: 577px; height: 14px; margin-top: 3px; }
   #dirty-overlay { position: relative; }
   #dirty-overlay canvas.overlay {
     position: absolute; left: 8px; top: 8px; width: 599px; height: 172px;
@@ -68,7 +67,7 @@
   <div class="stage light" id="dirty-overlay">
     <canvas id="card-light" class="card" width="1198" height="344"></canvas>
     <canvas id="overlay" class="overlay" width="599" height="172"></canvas>
-    <canvas id="strip-light" class="strip" width="800" height="28"></canvas><canvas id="stripr-light" class="strip-r" width="354" height="28"></canvas>
+    <canvas id="strip-light" class="strip" width="1154" height="28"></canvas>
   </div>
   <div id="dirty-stats">调度表尚未生成…</div>
   <div class="panel-label">红=标题带（随节拍） 蓝=进度+秒数（1 Hz） 绿=歌词窗（滑动期高频） 橙=当帧实际补丁并集</div>
@@ -78,7 +77,7 @@
   <div class="panel-label">dark（README 深色主题）</div>
   <div class="stage dark">
     <canvas id="card-dark" class="card" width="1198" height="344"></canvas>
-    <canvas id="strip-dark" class="strip" width="800" height="28"></canvas><canvas id="stripr-dark" class="strip-r" width="354" height="28"></canvas>
+    <canvas id="strip-dark" class="strip" width="1154" height="28"></canvas>
   </div>
 </div>
 
@@ -97,16 +96,14 @@ const BAR_LEFT = 41, BAR_RIGHT = 343, BAR_TOP = 150, BAR_H = 2;
 const KNOB_CELL = [0, 400, 20, 20];
 const STRIP_W = 577, STRIP_H = 14, ICON_SCALE = 0.74;
 const CAPTION_CX = 513;      // centre axis of the album art (432 + 162/2)
-const STRIP_SPLIT = 400;     // animated caption block starts here
 /* the strip row lives inside <details><summary>, whose disclosure marker
-   takes ~17px of inline space and pushes the whole row right — measured on
-   the live profile page (h3 17.5px font); shift the caption axis left by
-   the same amount so it still lands on the album-art axis */
+   takes ~17px of inline space (measured on the live profile page) and
+   pushes the whole row right — shift the caption axis left by the same
+   amount so it still lands on the album-art axis */
 const SUMMARY_INDENT = 17;
-/* the caption block also starts ~15css left of the album art (marker push
-   plus the gap GitHub inserts between paired images) — clip the caption to
-   the album-art column so text never sticks out past the cover's edges */
-const CAPTION_CLIP_LEFT = 15;
+/* caption visible window: the album-art column in strip coords — the strip
+   row sits 17px right of the card row, so the cover spans 415..577 here */
+const CAPTION_WIN = [COVER_LEFT - SUMMARY_INDENT, 577];
 const ARTIST_STATIC_MAX = 160;   // captions up to this width render static
                                  // (the clip window is the cover column, 162)
 const ARTIST_SPEED = 15;     // marquee speed for long captions, css px/s
@@ -303,14 +300,15 @@ function fmtTime(s) {
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
 
-/* ---- control strip: left block is static (transport + volume), the right
-   block carries the artist caption — static when short, a slow marquee
-   anchored to the album-art axis when long ---- */
-function drawStripLeft(canvas, theme) {
+/* ---- control strip: one full-width canvas — transport + volume icons on
+   the left, artist caption on the right (static when short, a slow marquee
+   anchored to the album-art axis when long). Merged so the README row is a
+   single image that scales as a whole instead of wrapping. ---- */
+function drawStrip(canvas, theme, t) {
   const p = PALETTES[theme];
   const ctx = canvas.getContext("2d");
   ctx.setTransform(2, 0, 0, 2, 0, 0);
-  ctx.clearRect(0, 0, STRIP_SPLIT, STRIP_H);
+  ctx.clearRect(0, 0, STRIP_W, STRIP_H);
 
   for (const spec of STRIP_ICONS) {
     const name = spec.name === "like" && DATA.liked ? "liked" : spec.name;
@@ -331,24 +329,16 @@ function drawStripLeft(canvas, theme) {
   const dotW = 20 * ICON_SCALE / 2;
   ctx.drawImage(knobDot(theme), (33 * 2 + (83 - 33) * 0.5 * 2) / 2 - Math.floor(dotW) / 2 + 0.5,
                 (6 * 2 + 3) / 2 - dotW / 2 + 0.5, dotW, dotW);
-}
 
-function drawStripRight(canvas, theme, t) {
-  const p = PALETTES[theme];
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(2, 0, 0, 2, 0, 0);
-  ctx.clearRect(0, 0, STRIP_W - STRIP_SPLIT, STRIP_H);
-
+  /* artist caption */
   ctx.font = "11px " + FONT;
   ctx.fillStyle = p.muted;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";   // baseline y, matching the original strip
-  const axis = CAPTION_CX - STRIP_SPLIT - SUMMARY_INDENT;   // album-art axis, minus the summary marker push
+  const axis = CAPTION_CX - SUMMARY_INDENT;       // album-art axis in strip coords
   const w = ctx.measureText(DATA.artist).width;
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(CAPTION_CLIP_LEFT, 0, STRIP_W - STRIP_SPLIT - CAPTION_CLIP_LEFT, STRIP_H);
-  ctx.clip();
+  ctx.beginPath(); ctx.rect(CAPTION_WIN[0], 0, CAPTION_WIN[1] - CAPTION_WIN[0], STRIP_H); ctx.clip();
   if (w <= ARTIST_STATIC_MAX) {
     ctx.fillText(DATA.artist, axis, 10);
   } else {
@@ -531,8 +521,8 @@ document.getElementById("loop").value = state.loop;
 function render() {
   drawCard(cardLight, "light", state.t);
   drawCard(cardDark, "dark", state.t);
-  drawStripRight(document.getElementById("stripr-light"), "light", state.t);
-  drawStripRight(document.getElementById("stripr-dark"), "dark", state.t);
+  drawStrip(document.getElementById("strip-light"), "light", state.t);
+  drawStrip(document.getElementById("strip-dark"), "dark", state.t);
   if (state.sched) drawOverlay(frameAt(state.t));
   else overlayCtx.clearRect(0, 0, CARD_W, CARD_H);
   const m = fmtTime(state.t);
@@ -579,8 +569,8 @@ function tick(now) {
 }
 
 function start() {
-  drawStripLeft(document.getElementById("strip-light"), "light");
-  drawStripLeft(document.getElementById("strip-dark"), "dark");
+  drawStrip(document.getElementById("strip-light"), "light", 0);
+  drawStrip(document.getElementById("strip-dark"), "dark", 0);
   rebuildSchedule();
   render();
   window.__previewReady = true;   // headless capturers wait for this flag

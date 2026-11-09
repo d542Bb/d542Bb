@@ -23,19 +23,14 @@
     <td>
       <h3>
         <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="assets/player-left-dark.webp?v=3456b3">
-          <img src="assets/player-left-light.webp?v=5b0730" width="400" alt="">
-        </picture><picture>
-          <img src="assets/player-cover.png?v=f32adc" width="199" alt="">
+          <source media="(prefers-color-scheme: dark)" srcset="assets/player-dark.webp?v=3456b3">
+          <img src="assets/player-light.webp?v=5b0730" width="599" alt="">
         </picture>
         <details>
           <summary>
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-left-dark.png?v=9c21d1">
-              <img src="assets/control-left-light.png?v=3d9f43" width="400" alt="">
-            </picture><picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=b83249">
-              <img src="assets/control-right-light.webp?v=f58789" width="177" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-dark.webp?v=b83249">
+              <img src="assets/control-light.webp?v=f58789" width="577" alt="">
             </picture>
           </summary>
           <br>

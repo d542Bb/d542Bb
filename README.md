@@ -23,10 +23,10 @@
     <td>
       <h3>
         <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="assets/player-left-dark.webp?v=9ae4f1">
-          <img src="assets/player-left-light.webp?v=a5159f" width="400" alt="">
+          <source media="(prefers-color-scheme: dark)" srcset="assets/player-left-dark.webp?v=9f2ad4">
+          <img src="assets/player-left-light.webp?v=9de37d" width="400" alt="">
         </picture><picture>
-          <img src="assets/player-cover.png?v=8596d9" width="199" alt="">
+          <img src="assets/player-cover.png?v=bf870a" width="199" alt="">
         </picture>
         <details>
           <summary>

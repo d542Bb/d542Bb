@@ -98,6 +98,11 @@ const KNOB_CELL = [0, 400, 20, 20];
 const STRIP_W = 577, STRIP_H = 14, ICON_SCALE = 0.74;
 const CAPTION_CX = 513;      // centre axis of the album art (432 + 162/2)
 const STRIP_SPLIT = 400;     // animated caption block starts here
+/* the strip row lives inside <details><summary>, whose disclosure marker
+   takes ~17px of inline space and pushes the whole row right — measured on
+   the live profile page (h3 17.5px font); shift the caption axis left by
+   the same amount so it still lands on the album-art axis */
+const SUMMARY_INDENT = 17;
 const ARTIST_STATIC_MAX = 170;   // captions up to this width render static
 const ARTIST_SPEED = 15;     // marquee speed for long captions, css px/s
 const ARTIST_FPS = 15;       // effective caption refresh (frames dedupe)
@@ -332,20 +337,20 @@ function drawStripRight(canvas, theme, t) {
   ctx.font = "11px " + FONT;
   ctx.fillStyle = p.muted;
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const axis = CAPTION_CX - STRIP_SPLIT;          // album-art centre in this block
+  ctx.textBaseline = "alphabetic";   // baseline y, matching the original strip
+  const axis = CAPTION_CX - STRIP_SPLIT - SUMMARY_INDENT;   // album-art axis, minus the summary marker push
   const w = ctx.measureText(DATA.artist).width;
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, STRIP_W - STRIP_SPLIT, STRIP_H); ctx.clip();
   if (w <= ARTIST_STATIC_MAX) {
-    ctx.fillText(DATA.artist, axis, 12);
+    ctx.fillText(DATA.artist, axis, 10);
   } else {
     /* slow marquee: centre starts on the cover axis and drifts left */
     const span = w + 40;
     const tq = Math.floor(t * ARTIST_FPS) / ARTIST_FPS;
     const centre = axis - ((tq * ARTIST_SPEED) % span);
-    ctx.fillText(DATA.artist, centre, 12);
-    ctx.fillText(DATA.artist, centre + span, 12);
+    ctx.fillText(DATA.artist, centre, 10);
+    ctx.fillText(DATA.artist, centre + span, 10);
   }
   ctx.restore();
   ctx.textAlign = "left";

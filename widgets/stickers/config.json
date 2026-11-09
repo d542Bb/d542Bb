@@ -1,7 +1,7 @@
 {
-  "canvas": {
-    "width": 280,
-    "height": 220
+  "target": {
+    "width": 300,
+    "height": 141
   },
   "defaults": {
     "size": 78,
@@ -12,45 +12,97 @@
   "stickers": [
     {
       "src": "stickers/chibi.png",
-      "size": 60,
-      "x": 134.5,
-      "y": 69.2,
-      "rotate": 8.5
+      "size": 52,
+      "x": 156.1,
+      "y": 46.4,
+      "rotate": -3.2
     },
     {
       "src": "stickers/bilibili.png",
-      "size": 57,
-      "x": 88.3,
-      "y": 94.6,
-      "rotate": -8.0
+      "size": 49,
+      "x": 67.7,
+      "y": 87.8,
+      "rotate": -4.2
     },
     {
       "src": "stickers/star-gold.png",
-      "size": 63,
-      "x": 113.4,
-      "y": 138.5,
-      "rotate": 10.5
+      "size": 54,
+      "x": 79.2,
+      "y": 40.7,
+      "rotate": 4.1
     },
     {
       "src": "stickers/python.png",
-      "size": 51,
-      "x": 186.7,
-      "y": 67.5,
-      "rotate": 8.0
+      "size": 44,
+      "x": 231.7,
+      "y": 48.8,
+      "rotate": -4.8
     },
     {
       "src": "stickers/whale.png",
-      "size": 59,
-      "x": 150.3,
-      "y": 171.4,
-      "rotate": 10.9
+      "size": 51,
+      "x": 229.1,
+      "y": 92.9,
+      "rotate": -2.6
     },
     {
       "src": "stickers/maarm.png",
-      "size": 71,
-      "x": 166.7,
-      "y": 118.7,
-      "rotate": -1.0
+      "size": 62,
+      "x": 149.3,
+      "y": 98.6,
+      "rotate": 6.2,
+      "hero": true
     }
-  ]
+  ],
+  "variants": {
+    "narrow": {
+      "width": 160,
+      "height": 200,
+      "output": "stickers-narrow.png",
+      "layout": [
+        {
+          "src": "stickers/chibi.png",
+          "size": 43,
+          "x": 73.9,
+          "y": 42.0,
+          "rotate": -7.2
+        },
+        {
+          "src": "stickers/bilibili.png",
+          "size": 41,
+          "x": 47.6,
+          "y": 99.9,
+          "rotate": -5.4
+        },
+        {
+          "src": "stickers/star-gold.png",
+          "size": 45,
+          "x": 49.9,
+          "y": 152.2,
+          "rotate": -4.2
+        },
+        {
+          "src": "stickers/python.png",
+          "size": 36,
+          "x": 125.7,
+          "y": 46.9,
+          "rotate": -3.4
+        },
+        {
+          "src": "stickers/whale.png",
+          "size": 42,
+          "x": 95.0,
+          "y": 148.4,
+          "rotate": 6.0
+        },
+        {
+          "src": "stickers/maarm.png",
+          "size": 49,
+          "x": 99.4,
+          "y": 94.7,
+          "rotate": 9.3
+        }
+      ]
+    }
+  }
 }

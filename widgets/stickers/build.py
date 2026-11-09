@@ -13,11 +13,12 @@ Each sticker image goes through one pipeline:
                   compose on a transparent canvas
 
 Inputs
-  config.json        canvas size, sticker placements, render defaults
+  config.json        target display boxes, sticker placements, render defaults
   stickers/          raw sticker images (transparent PNGs work best)
 
 Outputs
-  assets/stickers.png
+  assets/stickers.png           desktop board
+  assets/stickers-<name>.png    one PNG per entry in config "variants"
 
 Usage: python widgets/stickers/build.py   (requires Pillow)
 """
@@ -29,6 +30,8 @@ import zlib
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageStat
+
+import suggest
 
 ROOT = Path(__file__).resolve().parents[2]   # repo root (assets/ lives here)
 WIDGET = Path(__file__).resolve().parent     # this widget's folder
@@ -453,31 +456,44 @@ def build_layer(item: dict, defaults: dict):
     return sticker, shadow, left, top, shadow_left, shadow_top, spread
 
 
-def main():
-    cfg = load_config()
-    defaults = cfg.get("defaults", {})
-    layers = [build_layer(item, defaults) for item in cfg["stickers"]]
+def render_board(items, frame, defaults, out_path, fit=True):
+    """Compose one board PNG. `frame` is the display box ({width, height} in
+    CSS px) the README shows it at: the sheet is padded to exactly that
+    aspect, so the width attribute alone pins both displayed dimensions."""
+    layers = [build_layer(item, defaults) for item in items]
 
-    if cfg.get("fit", defaults.get("fit", True)):
-        # Grow the output to hold every sticker and its shadow instead of
-        # truncating them at the configured frame: straight cuts at the sheet
-        # edge are what a sticker sheet must never have. The shadow is only
-        # followed to ~2 sigma — beyond that it is too faint to see.
+    if fit:
+        # Grow the sheet to hold every sticker and its shadow instead of
+        # truncating them: straight cuts at the sheet edge are what a sticker
+        # sheet must never have. The shadow is only followed to ~2 sigma —
+        # beyond that it is too faint to see.
         xs0, ys0, xs1, ys1 = [], [], [], []
         for sticker, shadow, left, top, _, _, spread in layers:
             xs0 += [left, left - spread if shadow else left]
             ys0 += [top, top - spread if shadow else top]
             xs1 += [left + sticker.width, left + sticker.width + (spread if shadow else 0)]
             ys1 += [top + sticker.height, top + sticker.height + (spread if shadow else 0)]
-        margin = SCALE
-        min_x, min_y = min(xs0) - margin, min(ys0) - margin
-        max_x, max_y = max(xs1) + margin, max(ys1) + margin
+        min_x, min_y = min(xs0) - SCALE, min(ys0) - SCALE
+        max_x, max_y = max(xs1) + SCALE, max(ys1) + SCALE
+        if frame:
+            # Extend the sheet, centred, to the frame's aspect: what the ink
+            # leaves transparent shows as breathing room around the pile.
+            want = frame["width"] / frame["height"]
+            w0, h0 = max_x - min_x, max_y - min_y
+            if w0 / h0 < want:
+                grow = round(h0 * want) - w0
+                min_x -= grow // 2
+                max_x += grow - grow // 2
+            elif w0 / h0 > want:
+                grow = round(w0 / want) - h0
+                min_y -= grow // 2
+                max_y += grow - grow // 2
         ox, oy = -min_x, -min_y
         width = (max_x - min_x + SCALE - 1) // SCALE
         height = (max_y - min_y + SCALE - 1) // SCALE
     else:
         ox, oy = 0, 0
-        width, height = cfg["canvas"]["width"], cfg["canvas"]["height"]
+        width, height = frame["width"], frame["height"]
 
     canvas = Image.new("RGBA", (width * SCALE, height * SCALE), (0, 0, 0, 0))
     # Every shadow under every sticker: a neighbour never casts a dirty grey
@@ -491,8 +507,30 @@ def main():
     # Keep the supersampled canvas: the README shows the PNG at roughly half
     # its pixel width, so saving at 1x would have the browser upscale a
     # blurry file instead of downscaling a sharp one.
-    canvas.save(ROOT / "assets/stickers.png", optimize=True)
-    print(f"wrote assets/stickers.png ({width * SCALE}x{height * SCALE}, display at width={width})")
+    canvas.save(out_path, optimize=True)
+    box = f", display box {frame['width']}x{frame['height']}" if frame else ""
+    print(f"wrote {out_path.name} ({canvas.width}x{canvas.height} px{box})")
+
+
+def main():
+    cfg = load_config()
+    defaults = cfg.get("defaults", {})
+    fit = cfg.get("fit", defaults.get("fit", True))
+    frame = cfg.get("target") or cfg.get("canvas")
+    render_board(cfg["stickers"], frame, defaults, ROOT / "assets/stickers.png", fit)
+
+    for name, variant in cfg.get("variants", {}).items():
+        layout = variant.get("layout")
+        if not layout:
+            sources = [s["src"] for s in cfg["stickers"]]
+            hero = next((s["src"] for s in cfg["stickers"] if s.get("hero")), None)
+            opts = {**defaults, **cfg.get("suggest", {})}
+            layout = suggest.auto_layout(sources, variant, opts, name, hero)
+        by_src = {s["src"]: s for s in cfg["stickers"]}
+        items = [{**by_src.get(e["src"], {}), **e} for e in layout]
+        out = ROOT / "assets" / variant.get("output", f"stickers-{name}.png")
+        render_board(items, {"width": variant["width"], "height": variant["height"]},
+                     defaults, out)
 
 
 if __name__ == "__main__":

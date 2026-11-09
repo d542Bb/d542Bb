@@ -1,7 +1,10 @@
 <table>
   <tr>
     <td>
-      <img src="assets/stickers.png" width="280" align="right" alt="">
+      <picture>
+        <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png">
+        <img src="assets/stickers.png" width="47%" align="right" alt="">
+      </picture>
       <p>AI 真是太好用了你们知道吗</p>
       <ul>
         <li>在做 <a href="https://github.com/Maa-RM/MaaRacingMaster">MaaRacingMaster</a>，巅峰极速的自动化平台</li>

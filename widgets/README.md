@@ -1,12 +1,5 @@
 # GitHub profile widgets
 
-## Temporary capability test
-
-<picture>
-  <source media="(max-width: 768px)" srcset="../assets/easter-egg.png">
-  <img src="../assets/stickers.png" width="45%" alt="">
-</picture>
-
 
 A GitHub profile README that is actually alive: a QQ-Music-style **"now playing"
 player** and a **Duolingo-style sticker board**, both rendered to static PNGs by
@@ -36,7 +29,7 @@ Rendered by this very repo (see it live on [the profile](https://github.com/d542
 | Widget | Generates | Docs |
 | --- | --- | --- |
 | [`player/`](player/) | `assets/player-{light,dark}.png`, `assets/control-bar-{light,dark}.png` | [player/README.md](player/README.md) |
-| [`stickers/`](stickers/) | `assets/stickers.png` | [stickers/README.md](stickers/README.md) |
+| [`stickers/`](stickers/) | `assets/stickers.png` (desktop) + `assets/stickers-narrow.png` (phones) | [stickers/README.md](stickers/README.md) |
 
 ## How it is put together
 
@@ -50,26 +43,28 @@ Rendered by this very repo (see it live on [the profile](https://github.com/d542
   removing a widget never touches YAML.
 - Builds are deterministic: the same inputs produce byte-identical files, so
   the committing Action stays quiet until something actually changes.
-- Everything renders at 2x and downsamples, for crisp text and clean outlines.
+- Everything renders at 2x and is served at 2x, so the browser downsamples
+  instead of upscaling — crisp text and clean outlines.
 
 ## Placing widgets in the README
 
-The packed look comes from a two-column table: text and player stacked in the
-left column, the sticker board spanning both rows on the right. Markdown does
+The root README is a two-row table: row one is your intro text with the
+sticker board floated to its right, row two is the player card. Markdown does
 not parse inside HTML table cells, so the text is written as HTML — it is only
 a handful of tags (see the top of the root [`README.md`](../README.md) for a
 working copy).
 
 Sizing notes learned the hard way:
 
-- GitHub's stylesheet adds ~13px of cell padding on each side and ~20px of
-  image padding, so an `width="599"` player fits a 624px column exactly.
-  With the player at its native 599px, the right cell leaves ~193px for the
-  sticker board on the standard 846px profile column.
-- Give the board cell `valign="top"` so the stickers start beside the text.
-- A plain `align="right"` float also works and reflows better on phones, but
-  short intro lines leave a hole between the text and the board — the table
-  keeps everything packed on desktop (it scrolls horizontally on phones).
+- GitHub's stylesheet pads table cells (~13px on each side) and floats README
+  images with 20px of left padding — that padding is the gap between text and
+  stickers, so the PNG needs none baked in.
+- The sticker board is a `<picture>` with a percentage width: the wide sheet
+  shows on desktop, phones swap to a portrait variant at ≤480px, and the
+  percentage keeps the text's share of the column stable at every screen size.
+  A fixed pixel width would crush the text on phones.
+- The board PNG's aspect (its `target` frame) decides the height it occupies —
+  aim it at the height of your text block so the cell carries no dead space.
 - Individual stickers inside the composed board can't carry links — if you
   need a clickable element, place a separate `<a href="..."><img ...></a>`.
 

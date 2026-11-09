@@ -11,36 +11,32 @@ transparent, so the same image works in light and dark mode.
 
 Preview (sample stickers — replace them with your own):
 
-<picture><img src="../../assets/stickers.png" width="300" alt="sticker board"></picture>
+<picture><img src="../../assets/stickers.png" width="330" alt="sticker board"></picture>
 
 ## Use it on your profile
 
-Reference the generated image where you want the board, **before** the text it
-should sit beside. The PNG is saved at 2× and auto-fits the stickers; the build
-log ends with `display at width=…` — use that number (roughly the canvas size)
-as the `width` attribute to keep the design at its intended scale:
-
-Right of the text (text wraps on its left):
+The board is responsive: the wide sheet shows on desktop, and phones (≤480px
+viewport) swap to a portrait rearrangement of the same stickers. Reference it
+**before** the text it should sit beside:
 
 ```html
-<img src="assets/stickers.png" align="right" width="330" alt="">
+<picture>
+  <source media="(max-width: 480px)" srcset="assets/stickers-narrow.png">
+  <img src="assets/stickers.png" width="47%" align="right" alt="">
+</picture>
 ```
 
-Left of the text:
-
-```html
-<img src="assets/stickers.png" align="left" width="330" alt="">
-```
-
-Tips:
-
-- Keep `width` at or below ~40% of the content column (≈300px on desktop);
-  on phones the column is narrow and the text needs room to wrap.
-- The floated image occupies vertical space too: keep the canvas height close
-  to the height of the text block beside it, otherwise the next element (e.g.
-  the player card) gets pushed further down.
-- Transparent PNGs look best. Opaque images (photos, screenshots) also work —
-  they are automatically rounded and framed like a die-cut sticker.
+- A percentage `width` keeps the text beside it at a fixed share of the column
+  on every screen size — a fixed pixel width would crush the text on phones.
+- GitHub pads README images by 20px; that padding is the gap between text and
+  stickers, so the PNG needs none baked in.
+- The PNG is saved at 2× and auto-fits the stickers, then is padded to exactly
+  the `target` aspect — so the width percentage alone pins both the width and
+  the height the board occupies. Aim the target frames at the hole beside your
+  text (see the fields below), and pick the percentage so
+  `target.width ≈ percentage × your column width`.
+- Opaque sources (photos, screenshots) also work — they are automatically
+  rounded and framed like a die-cut sticker.
 
 ## Config fields
 
@@ -49,16 +45,19 @@ then push — the **Build profile artwork** action regenerates the board.
 
 | Field | Meaning |
 | --- | --- |
-| `canvas.width` / `canvas.height` | Coordinate frame for sticker positions. The saved PNG auto-expands to fit every sticker plus its shadow — it never hard-clips (set `"fit": false` to clip at this frame instead). |
+| `target.width` / `height` | Display box of the desktop board, in CSS px. The build pads the PNG to exactly this aspect; the README's percentage scales it. |
 | `stickers[].src` | Image path, relative to this folder. |
-| `stickers[].size` | On-screen width in px; height scales to match. Unspecified stickers fall back to `defaults.size`. |
-| `stickers[].x` / `y` | Centre position of the sticker on the canvas. |
+| `stickers[].size` | On-screen width in px on the desktop board; height scales to match. Unspecified stickers fall back to `defaults.size`. |
+| `stickers[].x` / `y` | Centre position of the sticker on the desktop board. |
 | `stickers[].rotate` | Tilt in degrees (counter-clockwise), or `"random"` for a stable per-sticker random tilt (seeded by the file name, so builds stay reproducible). Subtle values like ±8–15 look best. |
+| `stickers[].hero` | `true` on one sticker: it gets the largest size share when suggesting and is drawn on top of the pile. |
+| `stickers[].pinned` | `true` keeps this sticker's placement when the suggester re-runs. |
 | `stickers[].border` | White outline width in px. Default 9; `0` disables. |
 | `stickers[].shadow` | `false` disables the drop shadow (on by default). |
 | `stickers[].alpha_threshold` | Alpha below this counts as background. Default 250 (set in `defaults`); `0` keeps every pixel as-is. |
 | `stickers[].solidify` | Fine-tune the solidify pass: `{ "min_keep": 0.04, "fill_holes": true, "close": 2 }`. |
 | `stickers[].harmonize` / `material` | `false` opts one sticker out of colour harmonisation / the enamel finish. |
+| `variants.<name>` | Extra boards for other screen shapes — e.g. a portrait pile for phones. Fields: `width` / `height` (display box), `output` (PNG file name under `assets/`), optional `layout` (a size/x/y/rotate list like the desktop placements; generated automatically when absent). |
 
 Shared knobs live in the top-level `defaults` object and apply to every
 sticker unless overridden per sticker — including `size` (a shared default
@@ -66,18 +65,19 @@ on-screen width) and the render toggles below.
 
 ## Suggesting a layout
 
-After adding or removing stickers, or changing the canvas, let the tool
-propose sizes and positions:
+After adding or removing stickers or changing a frame, let the tool propose
+sizes and positions:
 
 ```bash
-python widgets/stickers/suggest.py
+python widgets/stickers/suggest.py          # desktop board -> stickers[]
+python widgets/stickers/suggest.py narrow   # a variant -> variants.narrow.layout
 ```
 
-It splits an area budget across the stickers (config order = size hierarchy:
-put your hero first), then relaxes a seeded scatter until neighbouring
-stickers overlap by roughly 10–30% of the smaller one — a lively pile where
-nothing gets swallowed, and the hero is drawn on top. Suggested values are
-written back into `config.json`; tweak them by hand afterwards, and mark a
+It splits an area budget across the stickers (the `hero` gets the largest
+share), scatters them on a frame-shaped ellipse, relaxes the pile until
+neighbours overlap by roughly 10–30% of the smaller one, then stretches the
+pile to fill the frame — a lively sheet with no dead corners. Suggested values
+are written back into `config.json`; tweak them by hand afterwards, and mark a
 sticker `"pinned": true` to keep it exactly where you set it.
 
 ## Semi-transparent sources

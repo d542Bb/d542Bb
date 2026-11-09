@@ -23,19 +23,19 @@
     <td>
       <h3>
         <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="assets/player-left-dark.webp?v=9f2ad4">
-          <img src="assets/player-left-light.webp?v=9de37d" width="400" alt="">
+          <source media="(prefers-color-scheme: dark)" srcset="assets/player-left-dark.webp?v=3456b3">
+          <img src="assets/player-left-light.webp?v=5b0730" width="400" alt="">
         </picture><picture>
-          <img src="assets/player-cover.png?v=bf870a" width="199" alt="">
+          <img src="assets/player-cover.png?v=f32adc" width="199" alt="">
         </picture>
         <details>
           <summary>
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-left-dark.png?v=a1690f">
-              <img src="assets/control-left-light.png?v=cc39fd" width="400" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-left-dark.png?v=9c21d1">
+              <img src="assets/control-left-light.png?v=3d9f43" width="400" alt="">
             </picture><picture>
-              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=a1690f">
-              <img src="assets/control-right-light.webp?v=cc39fd" width="177" alt="">
+              <source media="(prefers-color-scheme: dark)" srcset="assets/control-right-dark.webp?v=420a3a">
+              <img src="assets/control-right-light.webp?v=d46a21" width="177" alt="">
             </picture>
           </summary>
           <br>
